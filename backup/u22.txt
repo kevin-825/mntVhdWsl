@@ -1,0 +1,6 @@
+wsl --mount --vhd E:\vms\vmbox\NewVirtualDisk.vhd
+wsl -d ubuntu2204
+wsl -t ubuntu2204
+wsl -l -v
+wsl.exe --unmount \\?\E:\vms\vmbox\NewVirtualDisk.vhd
+wsl -l -v
