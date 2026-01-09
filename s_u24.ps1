@@ -10,7 +10,7 @@ $WinPs1Script = Join-Path $ScriptDir 'mount_vhd_wsl.ps1'
 # & $WinCmdScript 'Ubuntu-24.04' 'E:\VHDs\Shared_v0.vhdx'
 
 # Run the PowerShell script with parameters
-& $WinPs1Script -Distro 'Ubuntu-24.04' -VhdPaths 'E:\VHDs\Shared_v0.vhdx', 'Z:\ramDisk2.vhdx'
+& $WinPs1Script -Distro 'Ubuntu-24.04' -VhdPaths 'D:\VirtualMachines\vhds\Shared_v0.vhdx', 'D:\VirtualMachines\vhds\Share1.vhdx'
 
 # Optional pause (like `pause` in CMD)
 Read-Host 'Press Enter to continue...'

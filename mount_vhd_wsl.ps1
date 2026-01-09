@@ -24,23 +24,20 @@ foreach ($vhdPath in $VhdPaths) {
 
     # Create temp bash script
 $scriptContent = @"
-NEW_DISK="`$(lsblk -nr -o NAME,TYPE | awk '`$2=="disk" {print `$1}' | sort | tail -n1)"
+
+NEW_DISK="`$USER"
 echo New disk detected: /dev/`$NEW_DISK
-PART="`$(lsblk -nr -o NAME,TYPE | awk -v disk=`"`$NEW_DISK" '`$2=="part" && `$1 ~ "^"disk {print `$1}' | head -n1)"
-echo "PART is: `$PART"
-if [ -n "`$PART" ]; then
-    echo "Mounting /dev/`$PART to /mnt/wsl/$driveName"
-    sudo mkdir -p /mnt/wsl/`$driveName
-    sudo mount /dev/`$PART /mnt/wsl/$driveName
-else
-    echo "No partition found for disk `$NEW_DISK. Skipping mount."
-fi
+echo `$USER
+
+echo "USER is: `$USER"
+env | grep USER
 "@ -replace "`r", ""
 
 
 
 
 	echo "done\n"
+	echo $scriptContent
     # Run the script inside WSL
     wsl -d $Distro -- bash -c "`"$scriptContent`""
 	echo "done2\n"
@@ -48,9 +45,13 @@ fi
 
 	$linkCmd = @"
 set -e && ls /mnt/wsl/
-`[ ! -e /home/`$(whoami)/$driveName ] && ln -s /mnt/wsl/$driveName /home/`$(whoami)/$driveName
+`[ -e /home/`$(whoami)/$driveName `] && echo /home/`$(whoami)/$driveName esxits!!!!
+ln -s /mnt/wsl/$driveName /home/`$(whoami)/$driveName
 "@ -replace "`r", ""
 	
+	echo ++++
+	echo $linkCmd
+	echo ++++
 	wsl -d $Distro -- bash -c "`"$linkCmd`""
 
 
@@ -66,8 +67,8 @@ wsl -t $Distro
 
 # Unmount all VHDs
 foreach ($vhd in $mountedVhds) {
-	echo vhd:$vhd
     wsl --unmount "$vhd"
 }
 
 Write-Host "✅ All VHD/VHDX files unmounted."
+
