@@ -23,26 +23,28 @@ foreach ($vhdPath in $VhdPaths) {
 
 
     # Create temp bash script
-$scriptContent = @"
+#$scriptContent = @"
+#
+#NEW_DISK="`$USER"
+#echo New disk detected: /dev/`$NEW_DISK
+#echo `$USER
+#
+#echo "USER is: `$USER"
+#env | grep USER
+#"@ -replace "`r", ""
+#
+#
+#
+#
+#	echo "done\n"
+#	echo $scriptContent
+#    # Run the script inside WSL
+#    wsl -d $Distro -- bash -c "`"$scriptContent`""
+#	echo "done2\n"
 
-NEW_DISK="`$USER"
-echo New disk detected: /dev/`$NEW_DISK
-echo `$USER
-
-echo "USER is: `$USER"
-env | grep USER
-"@ -replace "`r", ""
 
 
-
-
-	echo "done\n"
-	echo $scriptContent
-    # Run the script inside WSL
-    wsl -d $Distro -- bash -c "`"$scriptContent`""
-	echo "done2\n"
-    # Create symbolic link in WSL home
-
+# Create symbolic link in WSL home
 	$linkCmd = @"
 set -e && ls /mnt/wsl/
 `[ -e /home/`$(whoami)/$driveName `] && echo /home/`$(whoami)/$driveName esxits!!!!
