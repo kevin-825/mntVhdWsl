@@ -14,3 +14,8 @@ then do:
 sudo fdisk /dev/sdx
 
 then create partition table and new partition
+
+
+usage：
+
+powershell -File path_to_ps1_scripts\s_u24.ps1
