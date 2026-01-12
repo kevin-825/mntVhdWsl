@@ -1,0 +1,51 @@
+
+alias cd2d1='cd /mnt/disk1_32g'
+alias cd2d2='cd /mnt/disk2_110g'
+cd2d1p() {
+    local n="${1#cd2d1p}"
+    cd "/mnt/wsl/disk1_32g_p$n"
+}
+alias cd2d1p=cd2d1p
+
+cd2d2p() {
+    local n="${1#cd2d1p}"
+    cd "/mnt/wsl/disk2_110g_p$n"
+}
+alias cd2d1p=cd2d2p
+
+
+alias cd2vhd0='cd /hst_root/mnt/wsl/vhd0'
+alias cd2vhd1='cd /hst_root/mnt/wsl/vhd1'
+alias cd2rd0='cd /mnt/ramdisk0'
+
+mkramdisk() {
+    size="$1"
+    sudo mkdir -p /mnt/ramdisk0
+    sudo mount -t tmpfs -o size="$size" tmpfs /mnt/ramdisk0
+    echo "RAM disk mounted at /mnt/ramdisk0 with size $size"
+}
+
+rmramdisk() {
+    if mountpoint -q /mnt/ramdisk0; then
+        echo "Before unmount:"
+        df -h /mnt/ramdisk0 2>/dev/null
+
+        # If current directory is inside the ramdisk, move out
+        case "$PWD" in
+            /mnt/ramdisk0* )
+                cd ~
+                ;;
+        esac
+
+        sudo umount -l /mnt/ramdisk0
+        sudo rmdir /mnt/ramdisk0 2>/dev/null
+
+        echo "RAM disk unmounted and directory removed"
+
+        echo "After unmount:"
+        df -h /mnt/ramdisk0 2>/dev/null || echo "No filesystem at /mnt/ramdisk0"
+    else
+        echo "No RAM disk mounted at /mnt/ramdisk0"
+    fi
+}
+
