@@ -1,6 +1,20 @@
+
 param(
     [string]$Distro = "Ubuntu-24.04"
 )
+
+
+$IsAdmin = ([Security.Principal.WindowsPrincipal] `
+    [Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $IsAdmin) {
+    Start-Process powershell.exe -Verb RunAs -ArgumentList "`"$PSCommandPath`""
+    exit
+}
+
+Write-Host "Running as admin now."
+
 
 $ErrorActionPreference = "Stop"
 
@@ -29,14 +43,54 @@ $Disks = @(
         Name = "disk2_110g"
         Type = "PHYSICAL"
         Partition = 1
+    },
+    @{
+        Path = "\\.\PHYSICALDRIVE5"
+        Name = "ramdisk0"
+        Type = "PHYSICAL"
+        Partition = 0
     }
 )
+
+foreach ($disk in $Disks) {
+
+    $path = $disk.Path
+    $name = $disk.Name
+    $type = $disk.Type
+    $partition = $disk.Partition
+
+    Write-Host "Processing $path ($type)"
+
+    if ($type -eq "PHYSICAL") {
+
+        if ($path -match "PHYSICALDRIVE(\d+)") {
+            $diskNumber = [int]$matches[1]
+            Write-Host "  Extracted disk number: $diskNumber"
+        } else {
+            Write-Host "  ERROR: Could not extract disk number from $path"
+            continue
+        }
+
+        Write-Host "  Taking disk $diskNumber offline..."
+
+        try {
+            Set-Disk -Number $diskNumber -IsOffline $true -ErrorAction Stop
+            Write-Host "  Disk $diskNumber is now offline."
+        }
+        catch {
+            Write-Host "  Failed to offline disk ${diskNumber}: $($_)"
+            continue
+        }
+    }
+}
+
 
 foreach ($disk in $Disks) {
     $path = $disk.Path
     $name = $disk.Name
     $type = $disk.Type
     $partition = $disk.Partition
+
 
     # NEW: naming rule
     if ($partition -eq 0) {
@@ -91,4 +145,7 @@ foreach ($disk in $Disks) {
 }
 Write-Host ("")
 Write-Host ("")
-Read-Host 'Press Enter to continue...'
+
+wsl /home/kflyn/wsl-mount-ramdisk.sh
+
+wsl.exe -d $Distro --cd ~

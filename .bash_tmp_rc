@@ -1,6 +1,6 @@
 
-alias cd2d1='cd /mnt/disk1_32g'
-alias cd2d2='cd /mnt/disk2_110g'
+alias cd2d1='cd /mnt/wsl/disk1_32g_p1'
+alias cd2d2='cd /mnt/wsl/disk2_110g_p1'
 cd2d1p() {
     local n="${1#cd2d1p}"
     cd "/mnt/wsl/disk1_32g_p$n"
@@ -16,7 +16,7 @@ alias cd2d1p=cd2d2p
 
 alias cd2vhd0='cd /hst_root/mnt/wsl/vhd0'
 alias cd2vhd1='cd /hst_root/mnt/wsl/vhd1'
-alias cd2rd0='cd /mnt/ramdisk0'
+alias cd2rd0='cd /mnt/wsl/ramdisk0'
 
 mkramdisk() {
     size="$1"
@@ -48,4 +48,6 @@ rmramdisk() {
         echo "No RAM disk mounted at /mnt/ramdisk0"
     fi
 }
+
+export PATH="/mnt/wsl/vhd0/local_bins/riscv/riscv64-glibc-ubuntu-24.04-gcc/bin:/mnt/wsl/vhd0/local_bins/riscv/riscv64-elf-ubuntu-24.04-gcc/bin:$PATH"
 

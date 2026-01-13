@@ -56,9 +56,11 @@ cd2d2p() {
 alias cd2d1p=cd2d2p
 
 #alias cd2d5='cd /mnt/disk5_ramdisk'
-alias cd2rd0='cd /mnt/ramdisk0'
+alias cd2rd0='cd /mnt/wsl/ramdisk0'
 alias cd2vhd0='cd /mnt/wsl/vhd0'
 alias cd2vhd1='cd /mnt/wsl/vhd1'
+
+
 
 mkramdisk() {
     size="$1"
@@ -111,6 +113,16 @@ rmramdisk() {
 if [ -f ~/vhd1/bashconfig.sh ]; then
     . ~/vhd1/bashconfig.sh
 fi
+
+# if [ -f ~/wsl-mount-ramdisk.sh ]; then
+#     ~/wsl-mount-ramdisk.sh      # run in new process
+# fi
+if ! mountpoint -q /mnt/wsl/ramdisk0; then
+    powershell.exe "C:\Users\kflyn\Projects\mntVhdWsl\Mount-All-Disks.ps1"
+fi
+
+
+export PATH="/mnt/wsl/vhd0/local_bins/riscv/riscv64-glibc-ubuntu-24.04-gcc/bin:/mnt/wsl/vhd0/local_bins/riscv/riscv64-elf-ubuntu-24.04-gcc/bin:$PATH"
 
 export PATH="$PATH:/home/$USER/docker_manage_script"
 
