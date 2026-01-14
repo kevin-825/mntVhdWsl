@@ -1,0 +1,52 @@
+{
+  "Devices": [
+    {
+      "Path": "\\\\.\\PHYSICALDRIVE5",
+      "DevType": "PhysicalRamDisk",
+      "MountLabel": "ramdisk0",
+      "OpMode": "EraseWholeDiskExt4",
+      "PartitionsNeedMount": [1],
+      "mountStatus": "unknown"
+    },
+    {
+      "Path": "\\\\.\\PHYSICALDRIVE1",
+      "DevType": "PhysicalHardDisk",
+      "MountLabel": "disk1_32g",
+      "OpMode": "MountAllExt4",
+      "PartitionsNeedMount": [1],
+      "mountStatus": "unknown"
+    },
+    {
+      "Path": "\\\\.\\PHYSICALDRIVE2",
+      "DevType": "PhysicalHardDisk",
+      "MountLabel": "disk2_110g",
+      "OpMode": "MountAllExt4",
+      "PartitionsNeedMount": [1],
+      "mountStatus": "unknown"
+    },
+    {
+      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\Shared_v0.vhdx",
+      "DevType": "VirtualVhdx",
+      "MountLabel": "vhd0",
+      "OpMode": "MountAllExt4",
+      "PartitionsNeedMount": [],
+      "mountStatus": "unknown"
+    },
+    {
+      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\Share1.vhdx",
+      "DevType": "VirtualVhdx",
+      "MountLabel": "vhd1",
+      "OpMode": "MountAllExt4",
+      "PartitionsNeedMount": [],
+      "mountStatus": "unknown"
+    },
+    {
+      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\vhd2.vhdx",
+      "DevType": "VirtualVhdx",
+      "MountLabel": "vhd2",
+      "OpMode": "MountAllExt4",
+      "PartitionsNeedMount": [1,2,3,4,5],
+      "mountStatus": "unknown"
+    }
+  ]
+}

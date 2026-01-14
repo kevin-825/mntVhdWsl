@@ -1,0 +1,206 @@
+﻿[
+    {
+        "Path":  "\\\\.\\PHYSICALDRIVE5",
+        "DevType":  "PhysicalRamDisk",
+        "MountLabel":  "ramdisk0",
+        "OpMode":  "EraseWholeDiskExt4",
+        "PartitionsNeedMount":  [
+                                    1
+                                ],
+        "DiskNumber":  5,
+        "UniqueId":  "URDVHD00",
+        "FriendlyName":  "ieung Ultra RAMDisk",
+        "BusType":  "SCSI",
+        "Location":  "Integrated : Adapter 6 : Port 0 : Target 0 : LUN 0",
+        "SizeBytes":  42991616000,
+        "PartitionStyle":  "RAW",
+        "PartitionTotalCnt":  0,
+        "mountStatus":  "success",
+        "Partitions":  [
+
+                       ]
+    },
+    {
+        "Path":  "\\\\.\\PHYSICALDRIVE1",
+        "DevType":  "PhysicalHardDisk",
+        "MountLabel":  "disk1_32g",
+        "OpMode":  "MountAllExt4",
+        "PartitionsNeedMount":  [
+                                    1
+                                ],
+        "DiskNumber":  1,
+        "UniqueId":  "eui.5CD2E47C8ED00100",
+        "FriendlyName":  "INTEL MEMPEK1J032GA",
+        "BusType":  "NVMe",
+        "Location":  "Integrated : Bus 2 : Device 0 : Function 0 : Adapter 2",
+        "SizeBytes":  29260513280,
+        "PartitionStyle":  "GPT",
+        "PartitionTotalCnt":  1,
+        "mountStatus":  "success",
+        "Partitions":  [
+                           {
+                               "PartitionNumber":  1,
+                               "SizeBytes":  29258416128,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "disk1_32g",
+                               "MountStatus":  "success"
+                           }
+                       ]
+    },
+    {
+        "Path":  "\\\\.\\PHYSICALDRIVE2",
+        "DevType":  "PhysicalHardDisk",
+        "MountLabel":  "disk2_110g",
+        "OpMode":  "MountAllExt4",
+        "PartitionsNeedMount":  [
+                                    1
+                                ],
+        "DiskNumber":  2,
+        "UniqueId":  "eui.5CD2E4AE52AF0100",
+        "FriendlyName":  "INTEL SSDPEK1A118GA",
+        "BusType":  "NVMe",
+        "Location":  "Integrated : Bus 3 : Device 0 : Function 0 : Adapter 3",
+        "SizeBytes":  118410444800,
+        "PartitionStyle":  "GPT",
+        "PartitionTotalCnt":  1,
+        "mountStatus":  "success",
+        "Partitions":  [
+                           {
+                               "PartitionNumber":  1,
+                               "SizeBytes":  118408347648,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "disk2_110g",
+                               "MountStatus":  "success"
+                           }
+                       ]
+    },
+    {
+        "Path":  "\\\\?\\D:\\VirtualMachines\\vhds\\Shared_v0.vhdx",
+        "DevType":  "VirtualVhdx",
+        "MountLabel":  "vhd0",
+        "OpMode":  "MountAllExt4",
+        "PartitionsNeedMount":  [
+
+                                ],
+        "DiskNumber":  7,
+        "UniqueId":  "6002248065D6F443E0C63CF5F5B8C641",
+        "FriendlyName":  "Msft Virtual Disk",
+        "BusType":  "File Backed Virtual",
+        "Location":  "D:\\VirtualMachines\\vhds\\Shared_v0.vhdx",
+        "SizeBytes":  375809638400,
+        "PartitionStyle":  "RAW",
+        "PartitionTotalCnt":  0,
+        "mountStatus":  "success",
+        "Partitions":  [
+
+                       ]
+    },
+    {
+        "Path":  "\\\\?\\D:\\VirtualMachines\\vhds\\Share1.vhdx",
+        "DevType":  "VirtualVhdx",
+        "MountLabel":  "vhd1",
+        "OpMode":  "MountAllExt4",
+        "PartitionsNeedMount":  [
+
+                                ],
+        "DiskNumber":  8,
+        "UniqueId":  "600224805C4DF60BCC9F8D87BEDD1902",
+        "FriendlyName":  "Msft Virtual Disk",
+        "BusType":  "File Backed Virtual",
+        "Location":  "D:\\VirtualMachines\\vhds\\Share1.vhdx",
+        "SizeBytes":  136365211648,
+        "PartitionStyle":  "RAW",
+        "PartitionTotalCnt":  0,
+        "mountStatus":  "success",
+        "Partitions":  [
+
+                       ]
+    },
+    {
+        "Path":  "\\\\?\\D:\\VirtualMachines\\vhds\\vhd2.vhdx",
+        "DevType":  "VirtualVhdx",
+        "MountLabel":  "vhd2",
+        "OpMode":  "MountAllExt4",
+        "PartitionsNeedMount":  [
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ],
+        "DiskNumber":  6,
+        "UniqueId":  "60022480895887FE7CA6127DDE85E28A",
+        "FriendlyName":  "Msft Virtual Disk",
+        "BusType":  "File Backed Virtual",
+        "Location":  "D:\\VirtualMachines\\vhds\\vhd2.vhdx",
+        "SizeBytes":  12884901888,
+        "PartitionStyle":  "GPT",
+        "PartitionTotalCnt":  5,
+        "mountStatus":  "success",
+        "Partitions":  [
+                           {
+                               "PartitionNumber":  1,
+                               "SizeBytes":  3219918336,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "vhd2_p1",
+                               "MountStatus":  "success"
+                           },
+                           {
+                               "PartitionNumber":  2,
+                               "SizeBytes":  3220702720,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "vhd2_p2",
+                               "MountStatus":  "success"
+                           },
+                           {
+                               "PartitionNumber":  3,
+                               "SizeBytes":  3220446208,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "vhd2_p3",
+                               "MountStatus":  "success"
+                           },
+                           {
+                               "PartitionNumber":  4,
+                               "SizeBytes":  1600324096,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "vhd2_p4",
+                               "MountStatus":  "success"
+                           },
+                           {
+                               "PartitionNumber":  5,
+                               "SizeBytes":  1619001344,
+                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                               "MbrType":  null,
+                               "Type":  "Unknown",
+                               "FsType":  null,
+                               "MountRequired":  true,
+                               "PartitionMountLabel":  "vhd2_p5",
+                               "MountStatus":  "success"
+                           }
+                       ]
+    }
+]

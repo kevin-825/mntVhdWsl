@@ -1,0 +1,57 @@
+{
+  "OpModes": {
+    "MountFirstExt4": 1,
+    "MountAllExt4": 2,
+    "MountAll": 3,
+    "MountAllGivenFs": 4,
+    "MountGivenPartitions": 5,
+    "MountGivenPartitionsIfFs": 6,
+
+    "FormatFirstExt4": 11,
+    "FormatAllExt4": 12,
+    "FormatAll": 13,
+    "FormatAllGivenFs": 14,
+    "FormatGivenPartitions": 15,
+    "FormatGivenPartitionsIfFs": 16,
+
+    "EraseWholeDiskExt4": 20
+  },
+
+  "DevTypeCapabilities": {
+    "PhysicalRamDisk": [
+      "MountFirstExt4",
+      "MountAllExt4",
+      "MountAll",
+      "MountAllGivenFs",
+      "MountGivenPartitions",
+      "MountGivenPartitionsIfFs",
+
+      "FormatFirstExt4",
+      "FormatAllExt4",
+      "FormatAll",
+      "FormatAllGivenFs",
+      "FormatGivenPartitions",
+      "FormatGivenPartitionsIfFs",
+
+      "EraseWholeDiskExt4"
+    ],
+
+    "PhysicalHardDisk": [
+      "MountFirstExt4",
+      "MountAllExt4",
+      "MountAll",
+      "MountAllGivenFs",
+      "MountGivenPartitions",
+      "MountGivenPartitionsIfFs"
+    ],
+
+    "VirtualVhdx": [
+      "MountFirstExt4",
+      "MountAllExt4",
+      "MountAll",
+      "MountAllGivenFs",
+      "MountGivenPartitions",
+      "MountGivenPartitionsIfFs"
+    ]
+  }
+}

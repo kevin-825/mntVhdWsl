@@ -9,7 +9,7 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 alias md='mkdir -p'
-
+alias rd='rmdir'
 alias cpv='rsync -ah --info=progress2'
 
 alias rm='rm -i'
@@ -30,7 +30,7 @@ alias gco='git checkout'
 alias gb='git branch'
 
 alias grep='grep --color=auto'
-#alias f='find . -name'
+alias f='find . -name'
 alias h='history'
 alias j='jobs -l'
 
@@ -39,6 +39,27 @@ alias update='sudo apt update && sudo apt upgrade'
 alias untar='tar -xvf'
 alias tarc='tar -cvf'
 alias serve='python3 -m http.server 8000'
+
+
+alias cd2d1='cd /mnt/wsl/disk1_32g_p1'
+alias cd2d2='cd /mnt/wsl/disk2_110g_p1'
+cd2d1p() {
+    local n="${1#cd2d1p}"
+    cd "/mnt/wsl/disk1_32g_p$n"
+}
+alias cd2d1p=cd2d1p
+
+cd2d2p() {
+    local n="${1#cd2d1p}"
+    cd "/mnt/wsl/disk2_110g_p$n"
+}
+alias cd2d1p=cd2d2p
+
+#alias cd2d5='cd /mnt/disk5_ramdisk'
+alias cd2rd0='cd /mnt/wsl/ramdisk0'
+alias cd2vhd0='cd /mnt/wsl/vhd0'
+alias cd2vhd1='cd /mnt/wsl/vhd1'
+
 
 
 mkramdisk() {
@@ -72,23 +93,36 @@ rmramdisk() {
     fi
 }
 
-
+# if ! mount | grep -q "/mnt/disk1_32g"; then
+#     echo mounting disk1_32g as /mnt/disk1_32g
+#     sudo mkdir -p /mnt/disk1_32g
+#     sudo mount -L disk1_32g /mnt/disk1_32g
+# fi
+# if ! mount | grep -q "/mnt/disk2_110g"; then
+#     echo mounting disk2_110g as /mnt/disk2_110g
+#     sudo mkdir -p /mnt/disk2_110g
+#     sudo mount -L disk2_110g /mnt/disk2_110g
+# fi
+#sudo mount -t tmpfs -o size=40G tmpfs /mnt/ramdisk0
+#if ! mount | grep -q "/mnt/ramdisk0"; then
+#    echo mounting ramdisk0 as /mnt/ramdisk0
+#    sudo mkdir -p /mnt/ramdisk0
+#    sudo mount -t tmpfs -o size=40G tmpfs /mnt/ramdisk0
+#fi
 
 if [ -f ~/vhd1/bashconfig.sh ]; then
     . ~/vhd1/bashconfig.sh
+fi
+
+# if [ -f ~/wsl-mount-ramdisk.sh ]; then
+#     ~/wsl-mount-ramdisk.sh      # run in new process
+# fi
+if ! mountpoint -q /mnt/wsl/ramdisk0; then
+    powershell.exe "C:\Users\kflyn\Projects\mntVhdWsl\Mount-All-Disks.ps1"
 fi
 
 
 export PATH="/mnt/wsl/vhd0/local_bins/riscv/riscv64-glibc-ubuntu-24.04-gcc/bin:/mnt/wsl/vhd0/local_bins/riscv/riscv64-elf-ubuntu-24.04-gcc/bin:$PATH"
 
 export PATH="$PATH:/home/$USER/docker_manage_script"
-
-
-if [ -f ~/.bash_aliases_1 ]; then
-    sed -i 's/\r$//' ~/.bash_aliases_1
-    . ~/.bash_aliases_1
-fi
-
-
-
 

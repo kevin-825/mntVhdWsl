@@ -48,7 +48,7 @@ $Disks = @(
         Path = "\\.\PHYSICALDRIVE5"
         Name = "ramdisk0"
         Type = "PHYSICAL"
-        Partition = 0
+        Partition = 1
     }
 )
 
