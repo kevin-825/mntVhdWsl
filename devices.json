@@ -39,14 +39,6 @@
       "OpMode": "MountAllExt4",
       "PartitionsNeedMount": [],
       "mountStatus": "unknown"
-    },
-    {
-      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\vhd2.vhdx",
-      "DevType": "VirtualVhdx",
-      "MountLabel": "vhd2",
-      "OpMode": "MountAllExt4",
-      "PartitionsNeedMount": [1,2,3,4,5],
-      "mountStatus": "unknown"
     }
   ]
 }

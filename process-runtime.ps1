@@ -136,16 +136,16 @@ Write-Host "  [ramdisk] mkfs.ext4 succeeded."
     foreach ($pm in $dev.Partitions) {
         if ($pm.MountRequired) { $pm.MountStatus = "success" }
     }
-
+	$dev.Partitions = @()
     $dev.mountStatus = "success"
     Write-Host "  [ramdisk] Mounted successfully."
 
     # Update FsType and partition metadata after formatting
-    $dev.Partitions[0].FsType = "ext4"
-    $dev.Partitions[0].PartitionNumber = 0
-    $dev.Partitions[0].PartitionTotalCnt = 1
-    $dev.Partitions[0].MountRequired = $true
-    $dev.Partitions[0].MountStatus = "success"
+    #$dev.Partitions[0].FsType = "ext4"
+    #$dev.Partitions[0].PartitionNumber = 0
+    #$dev.PartitionTotalCnt = 0
+    #$dev.Partitions[0].MountRequired = $true
+    #$dev.Partitions[0].MountStatus = "success"
 }
 
 # ------------------------------------------------------------
@@ -356,3 +356,27 @@ foreach ($dev in $runtime) {
 
 Write-Host "Alias file created at: $aliasFile"
 Write-Host ""
+
+
+# Copy into ramdisk0 (PHYSICALDRIVE5 PhysicalRamDisk)
+#$ramdisk = $runtime | Where-Object {
+#    $_.DevType -eq "PhysicalRamDisk" -and
+#    $_.Path -eq "\\.\PHYSICALDRIVE5" -and
+#    $_.mountStatus -eq "success"
+#}
+#
+#if ($ramdisk) {
+#	$mountPath = "/mnt/wsl/$($ramdisk.MountLabel)"
+#	$owner = wsl -d Ubuntu-24.04 -e stat -c %U $mountPath
+#	if ($owner -eq "root") {
+#		Write-Host "→ Fixing ownership on $mountPath"
+#		wsl -d Ubuntu-24.04 -e sudo chown -R kflyn:kflyn $mountPath
+#	} else {
+#		Write-Host "→ Ownership already correct ($owner), skipping chown"
+#	}
+#}
+
+$aliasSrc  = Join-Path $PSScriptRoot ".bash_aliases_1"
+$aliasDest = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+Copy-Item $aliasSrc $aliasDest -Force
+Write-Host "Copied .bash_aliases_1 into $aliasDest"
