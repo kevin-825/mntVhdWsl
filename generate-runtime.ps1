@@ -16,12 +16,20 @@ devices.json schema (per device):
   "mountStatus": "unknown"          # informational only
 }
 #>
-
 param(
-    [string]$ConfigPath  = ".\devices.json",
-    [string]$RuntimePath = ".\runtime-devices.json"
+    [string]$ConfigPath,
+    [string]$RuntimePath
 )
 
+Set-Location $PSScriptRoot
+
+if (-not $ConfigPath) {
+    $ConfigPath = Join-Path $PSScriptRoot "devices.json"
+}
+
+if (-not $RuntimePath) {
+    $RuntimePath = Join-Path $PSScriptRoot "runtime-devices.json"
+}
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -219,14 +227,4 @@ Write-Host "runtime-devices.json written."
 
 Write-Host "=== generate-runtime.ps1 completed ==="
 
-# --- Run process-runtime.ps1 if it exists in the same folder ---
-$proc = Join-Path $PSScriptRoot "process-runtime.ps1"
 
-if (Test-Path $proc) {
-    Write-Host ""
-    Write-Host "process-runtime.ps1 found. Running..."
-    & $proc
-} else {
-    Write-Host ""
-    Write-Host "process-runtime.ps1 not found in this folder. Skipping."
-}

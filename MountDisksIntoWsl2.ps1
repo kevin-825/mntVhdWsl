@@ -15,7 +15,7 @@ Write-Host "Running as admin now."
 # Entry point to run both scripts in order
 
 Write-Host "=== MountDisksIntoWsl2.ps1 starting ==="
-
+Set-Location $PSScriptRoot
 $root = $PSScriptRoot
 
 $gen = Join-Path $root "generate-runtime.ps1"
@@ -29,15 +29,17 @@ if (-not (Test-Path $gen)) {
 if (-not (Test-Path $proc)) {
     throw "process-runtime.ps1 not found in: $root"
 }
-
+wsl --shutdown
 # --- Run generate-runtime.ps1 ---
 Write-Host ""
 Write-Host "Running generate-runtime.ps1..."
+
 & $gen
 
-if ($LASTEXITCODE -ne 0) {
-    throw "generate-runtime.ps1 failed with exit code $LASTEXITCODE"
-}
+#if ($LASTEXITCODE -ne 0) {
+#    throw "generate-runtime.ps1 failed with exit code $LASTEXITCODE"
+#}
+Write-Warning "generate-runtime.ps1 exited with code $LASTEXITCODE"
 
 # --- Run process-runtime.ps1 ---
 Write-Host ""
