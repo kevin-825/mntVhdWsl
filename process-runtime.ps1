@@ -1,10 +1,15 @@
 <#
 process-runtime.ps1
-Phase 2: consume runtime-devices.json, mount all required partitions,
-handle PhysicalRamDisk only when FsType != ext4, and output final JSON.
+Consumes runtime-devices.json (grouped), mounts devices/partitions,
+handles PhysicalRamDisk special-case, and writes runtime-devices-final.json.
 
-Input:  runtime-devices.json
-Output: runtime-devices-final.json
+Rules:
+- Iterate groups dynamically (same order as runtime-devices.json)
+- Detect device type via DevType
+- If PartitionTotalCnt = 0 → mount whole disk (no --partition)
+- If PartitionTotalCnt > 0 → mount only partitions with MountRequired = true
+- PhysicalRamDisk special-case: format ext4 if needed, then mount whole disk
+- Update mountStatus and PartitionMountStatus
 #>
 
 param(
@@ -21,10 +26,8 @@ if (-not (Test-Path -LiteralPath $RuntimePath)) {
     throw "Runtime file not found: $RuntimePath"
 }
 
-# Load runtime devices
+# Load grouped runtime JSON
 $runtime = Get-Content -LiteralPath $RuntimePath -Raw -Encoding UTF8 | ConvertFrom-Json
-
-Write-Host "Loaded $($runtime.Count) runtime devices."
 
 # ------------------------------------------------------------
 # Helper: run WSL command and return stdout
@@ -70,26 +73,6 @@ function Find-LinuxDiskByUniqueId {
 }
 
 # ------------------------------------------------------------
-# Determine if this device needs special ramdisk handling
-# ------------------------------------------------------------
-function Is-RamDiskSpecialCase {
-    param($dev)
-
-    if ($dev.DevType -ne "PhysicalRamDisk") {
-        return $false
-    }
-
-    # If any FsType says ext4 → normal case
-    $fs = $dev.Partitions | Select-Object -ExpandProperty FsType -First 1
-    if ($fs -eq "ext4") {
-        return $false
-    }
-
-    # Otherwise → special case
-    return $true
-}
-
-# ------------------------------------------------------------
 # Special-case handler for PhysicalRamDisk
 # ------------------------------------------------------------
 function Handle-RamDiskSpecialCase {
@@ -97,68 +80,110 @@ function Handle-RamDiskSpecialCase {
 
     Write-Host "  [ramdisk] Special-case handling for $($dev.MountLabel)"
 
+    $phy = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
+
+    # ------------------------------------------------------------
+    # 1. Try whole-disk mount
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] Trying whole-disk mount..."
+    & wsl.exe --mount $phy --name $dev.MountLabel
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [ramdisk] Whole-disk mount succeeded."
+        foreach ($pm in $dev.Partitions) {
+            if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+        }
+        $dev.mountStatus = "success"
+        return
+    }
+
+    Write-Host "  [ramdisk] Whole-disk mount failed. Trying partition mount..."
+
+    # ------------------------------------------------------------
+    # 2. Try partition mount (if exists)
+    # ------------------------------------------------------------
+    if ($dev.Partitions.Count -gt 0) {
+        $partNum = $dev.Partitions[0].PartitionNumber
+        Write-Host "  [ramdisk] Trying partition mount..."
+        & wsl.exe --mount $phy --partition $partNum --name $dev.MountLabel
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  [ramdisk] Partition mount succeeded."
+            foreach ($pm in $dev.Partitions) {
+                if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+            }
+            $dev.mountStatus = "success"
+            return
+        }
+
+        Write-Host "  [ramdisk] Partition mount failed."
+    }
+
+    # ------------------------------------------------------------
+    # 3. Format whole disk and mount again
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] Resolving Linux disk path for formatting..."
     $linuxDisk = Find-LinuxDiskByUniqueId -UniqueId $dev.UniqueId
     if (-not $linuxDisk) {
         Write-Warning "  [ramdisk] Cannot resolve Linux disk. Marking failed."
         $dev.mountStatus = "failed"
-        foreach ($pm in $dev.Partitions) { $pm.MountStatus = "failed" }
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
         return
     }
 
-    # Format whole disk as EXT4
-Write-Host "  [ramdisk] mkfs.ext4 -F $linuxDisk"
+    Write-Host "  [ramdisk] Formatting whole disk as ext4..."
+    & wsl.exe bash -lc "sudo mkfs.ext4 -F $linuxDisk"
 
-# Run sudo interactively (NO redirection here)
-$mkfsOutput = & wsl.exe bash -lc "sudo mkfs.ext4 -F $linuxDisk"
-
-# Now check exit code
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "  [ramdisk] mkfs.ext4 failed for $linuxDisk"
-    $dev.mountStatus = "failed"
-    foreach ($pm in $dev.Partitions) { $pm.MountStatus = "failed" }
-    return
-}
-
-Write-Host "  [ramdisk] mkfs.ext4 succeeded."
-
-    # Mount via WSL
-    $phy = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
-    Write-Host "  [ramdisk] wsl --mount $phy --name $($dev.MountLabel)"
-    & wsl.exe --mount $phy --name $dev.MountLabel
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "  [ramdisk] WSL mount failed."
+        Write-Warning "  [ramdisk] mkfs.ext4 failed."
         $dev.mountStatus = "failed"
-        foreach ($pm in $dev.Partitions) { $pm.MountStatus = "failed" }
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
         return
     }
 
-    # Mark all required partitions as success
-    foreach ($pm in $dev.Partitions) {
-        if ($pm.MountRequired) { $pm.MountStatus = "success" }
-    }
-	$dev.Partitions = @()
-    $dev.mountStatus = "success"
-    Write-Host "  [ramdisk] Mounted successfully."
+    Write-Host "  [ramdisk] mkfs.ext4 succeeded. Re-mounting..."
 
-    # Update FsType and partition metadata after formatting
-    #$dev.Partitions[0].FsType = "ext4"
-    #$dev.Partitions[0].PartitionNumber = 0
-    #$dev.PartitionTotalCnt = 0
-    #$dev.Partitions[0].MountRequired = $true
-    #$dev.Partitions[0].MountStatus = "success"
+    & wsl.exe --mount $phy --name $dev.MountLabel
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "  [ramdisk] Mount after format failed."
+        $dev.mountStatus = "failed"
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
+        return
+    }
+
+    foreach ($pm in $dev.Partitions) {
+        if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+    }
+
+    $dev.mountStatus = "success"
+    Write-Host "  [ramdisk] Mounted successfully after format."
 }
 
 # ------------------------------------------------------------
-# Normal device handler (use --partition)
+# Normal handler for PhysicalHardDisk
 # ------------------------------------------------------------
-function Handle-NormalDevice {
+function Handle-Physical {
     param($dev)
 
     $phy = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
 
+    # Case 1: whole disk mount
+    if ($dev.PartitionTotalCnt -eq 0) {
+        Write-Host "  Mounting whole disk as '$($dev.MountLabel)'..."
+        & wsl.exe --mount $phy --name $dev.MountLabel
+
+        if ($LASTEXITCODE -eq 0) {
+            $dev.mountStatus = "success"
+        } else {
+            $dev.mountStatus = "failed"
+        }
+        return
+    }
+
+    # Case 2: mount required partitions
     foreach ($pm in $dev.Partitions) {
         if (-not $pm.MountRequired) { continue }
-        if ($pm.MountStatus -eq "success") { continue }
 
         $pNum   = [int]$pm.PartitionNumber
         $pLabel = $pm.PartitionMountLabel
@@ -167,84 +192,112 @@ function Handle-NormalDevice {
         & wsl.exe --mount $phy --name $pLabel --partition $pNum
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "    Success."
-            $pm.MountStatus = "success"
+            $pm.PartitionMountStatus = "success"
         } else {
-            Write-Warning "    Failed."
-            $pm.MountStatus = "failed"
+            $pm.PartitionMountStatus = "failed"
         }
     }
 
     # Device success only if all required partitions succeeded
-    #$failed = $dev.Partitions | Where-Object { $_.MountRequired -and $_.MountStatus -ne "success" }
-
     $failed = @(
-        $dev.Partitions | Where-Object { $_.MountRequired -and $_.MountStatus -ne "success" }
+        $dev.Partitions | Where-Object { $_.MountRequired -and $_.PartitionMountStatus -ne "success" }
     )
 
     $dev.mountStatus = if ($failed.Count -eq 0) { "success" } else { "failed" }
+}
 
-    # Update partition count
-    $dev.PartitionTotalCnt = $dev.Partitions.Count
+# ------------------------------------------------------------
+# Handler for MsftVHD
+# ------------------------------------------------------------
+function Handle-VHDX {
+    param($dev)
 
-    # Update FsType for each partition
+    $path = $dev.Path
+
+    # Case 1: whole disk mount
+    if ($dev.PartitionTotalCnt -eq 0) {
+        Write-Host "  Mounting whole VHDX as '$($dev.MountLabel)'..."
+        & wsl.exe --mount $path --vhd --name $dev.MountLabel
+
+        if ($LASTEXITCODE -eq 0) {
+            $dev.mountStatus = "success"
+        } else {
+            $dev.mountStatus = "failed"
+        }
+        return
+    }
+
+    # Case 2: mount required partitions
     foreach ($pm in $dev.Partitions) {
-        if ($pm.MountRequired -and $pm.MountStatus -eq "success") {
+        if (-not $pm.MountRequired) { continue }
 
+        $pNum   = [int]$pm.PartitionNumber
+        $pLabel = $pm.PartitionMountLabel
+
+        Write-Host "  Mounting VHDX partition #$pNum as '$pLabel'..."
+        & wsl.exe --mount $path --vhd --name $pLabel --partition $pNum
+
+        if ($LASTEXITCODE -eq 0) {
+            $pm.PartitionMountStatus = "success"
+        } else {
+            $pm.PartitionMountStatus = "failed"
         }
     }
 
-    # If single-partition disk, update device-level FsType
-    if ($dev.Partitions.Count -eq 1) {
-        #$dev.FsType = $dev.Partitions[0].FsType
-    }
+    # Device success only if all required partitions succeeded
+    $failed = @(
+        $dev.Partitions | Where-Object { $_.MountRequired -and $_.PartitionMountStatus -ne "success" }
+    )
+
+    $dev.mountStatus = if ($failed.Count -eq 0) { "success" } else { "failed" }
 }
 
 # ------------------------------------------------------------
-# MAIN LOOP
+# MAIN LOOP — iterate groups dynamically
 # ------------------------------------------------------------
-foreach ($dev in $runtime) {
+foreach ($groupName in $runtime.PSObject.Properties.Name) {
+
     Write-Host ""
-    Write-Host "Processing device: $($dev.MountLabel) (DevType=$($dev.DevType), Status=$($dev.mountStatus))"
+    Write-Host "=== Processing group: $groupName ==="
 
-    switch ($dev.mountStatus) {
+    foreach ($dev in $runtime.$groupName) {
 
-        "success" {
-            Write-Host "  [skip] Already mounted successfully. Skipping."
-            continue
-        }
+        Write-Host ""
+        Write-Host "Device: $($dev.MountLabel) (DevType=$($dev.DevType), Status=$($dev.mountStatus))"
+		
+		# ----------------------------------------------------
+		# ✔ Skip already-successful devices BEFORE switch
+		# ----------------------------------------------------
+		if ($dev.mountStatus -eq "success") {
+			Write-Host "  [skip] Already mounted. Skipping."
+			continue
+		}
 
-        "failed" {
-            if ($dev.DevType -eq "PhysicalRamDisk") {
+        switch ($dev.DevType) {
+		
+            "PhysicalRamDisk" {
                 Handle-RamDiskSpecialCase $dev
-            } else {
-                Handle-NormalDevice $dev
             }
-            continue
-        }
-
-        "pending" {
-            if ($dev.DevType -eq "PhysicalRamDisk") {
-                Handle-RamDiskSpecialCase $dev
-            } else {
-                Handle-NormalDevice $dev
+		
+            "PhysicalHardDisk" {
+                Handle-Physical $dev
             }
-            continue
-        }
-
-        default {
-            Write-Warning ("  Unknown mountStatus '{0}' - treating as failed." -f $dev.mountStatus)
-            if ($dev.DevType -eq "PhysicalRamDisk") {
-                Handle-RamDiskSpecialCase $dev
-            } else {
-                Handle-NormalDevice $dev
+		
+            "MsftVHD" {
+                Handle-VHDX $dev
+            }
+		
+            default {
+                #Write-Warning "Unknown DevType '$($dev.DevType)' — marking as error."      long —  will broke the code and won't run.
+				Write-Warning "Unknown DevType '$($dev.DevType)' - marking as error."
+                $dev.mountStatus = "error"
             }
         }
     }
 }
 
 # ------------------------------------------------------------
-# Write final JSON
+# Write final JSON (preserve grouping)
 # ------------------------------------------------------------
 $runtime | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $RuntimePath -Encoding UTF8
 $runtime | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputRuntimePath -Encoding UTF8
@@ -253,47 +306,111 @@ Write-Host ""
 Write-Host "Final runtime written to: $OutputRuntimePath"
 Write-Host "=== process-runtime.ps1 completed ==="
 
+# ------------------------------------------------------------
+# Generate .bash_aliases_1 and dockerVolumes variable
+# ------------------------------------------------------------
+Write-Host "Generating .bash_aliases_1 and docker volume hints..."
 
-Write-Host ""
-Write-Host "Use the following to run docker container if needed:"
-Write-Host ""
+$aliasFile = Join-Path $PSScriptRoot ".bash_aliases_1"
 
-foreach ($dev in $runtime) {
+# Start fresh (ASCII, CRLF)
+"" | Set-Content $aliasFile -Encoding Ascii
 
-    # Skip devices that failed
-    if ($dev.mountStatus -ne "success") { continue }
+# Collect docker -v lines
+$dockerList = @()
 
-    # Collect successful partitions
-    $partitions = $dev.Partitions | Where-Object { $_.MountRequired -and $_.MountStatus -eq "success" }
+foreach ($groupName in $runtime.PSObject.Properties.Name) {
+    $group = $runtime.$groupName
 
-    # Normalize to array
-    $partitions = @($partitions)
+    foreach ($dev in $group) {
 
-    # Case 1: zero or one partition
-    if ($partitions.Count -le 1) {
-        $label = $dev.MountLabel
-        Write-Host ("-v /mnt/wsl/{0}:/mnt/wsl/{0} \" -f $label)
-        continue
-    }
+        if ($dev.mountStatus -ne "success") { continue }
 
-    # Case 2: multiple partitions
-    foreach ($pm in $partitions) {
-        $pLabel = $pm.PartitionMountLabel
-        Write-Host ("-v /mnt/wsl/{0}:/mnt/wsl/{0} \" -f $pLabel)
+        $diskNum    = $dev.DiskNumber
+        $devType    = $dev.DevType
+        $mountLabel = $dev.MountLabel
+
+        # Successful partitions
+        $parts = @(
+            $dev.Partitions |
+            Where-Object { $_.MountRequired -and $_.PartitionMountStatus -eq "success" }
+        )
+
+        # Determine prefix and alias number
+        if ($devType -eq "VirtualVhdx") {
+            if ($mountLabel -match "\d+$") {
+                $N = $Matches[0]
+            } else {
+                $N = $diskNum
+            }
+            $prefix      = "v"
+            $aliasNumber = $N
+        }
+        else {
+            $prefix      = "d"
+            $aliasNumber = $diskNum
+        }
+
+        # ------------------------------------------------------------
+        # Case 1: zero or one partition
+        # ------------------------------------------------------------
+        if ($parts.Count -le 1) {
+
+            # Alias
+            Add-Content -Encoding Ascii $aliasFile "alias cd2${prefix}${aliasNumber}='cd /mnt/wsl/${mountLabel}'"
+            Add-Content -Encoding Ascii $aliasFile ""
+
+            # Docker -v
+            $dockerList += "-v /mnt/wsl/${mountLabel}:/mnt/wsl/${mountLabel} \"
+
+            continue
+        }
+
+        # ------------------------------------------------------------
+        # Case 2: multiple partitions
+        # ------------------------------------------------------------
+        foreach ($pm in $parts) {
+            $pLabel = $pm.PartitionMountLabel
+            $pNum   = $pm.PartitionNumber
+
+            # Alias
+            Add-Content -Encoding Ascii $aliasFile "alias cd2${prefix}${aliasNumber}p${pNum}='cd /mnt/wsl/${pLabel}'"
+            Add-Content -Encoding Ascii $aliasFile ""
+
+            # Docker -v
+            $dockerList += "-v /mnt/wsl/${pLabel}:/mnt/wsl/${pLabel} \"
+        }
     }
 }
 
+# ------------------------------------------------------------
+# Write dockerVolumes variable at the end of alias file
+# ------------------------------------------------------------
+Add-Content -Encoding Ascii $aliasFile 'dockerVolumes="\'
+foreach ($line in $dockerList) {
+    Add-Content -Encoding Ascii $aliasFile $line
+}
+Add-Content -Encoding Ascii $aliasFile '"'
+
+Write-Host "Alias file created at: $aliasFile"
+Write-Host ""
+# ------------------------------------------------------------
+# Copy alias file into WSL home
+# ------------------------------------------------------------
+$aliasSrc  = Join-Path $PSScriptRoot ".bash_aliases_1"
+$aliasDest = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+
+Copy-Item $aliasSrc $aliasDest -Force
+Write-Host "Copied .bash_aliases_1 into $aliasDest"
 Write-Host ""
 
-
-Write-Host ""
+# ------------------------------------------------------------
+# Verify mountpoints inside WSL
+# ------------------------------------------------------------
 Write-Host "Verifying mounted devices inside WSL..."
 Write-Host ""
 
-# Base mount directory inside WSL
 $MOUNT_BASE = "/mnt/wsl"
-
-# Run find command to list all mountpoints 2 levels deep
 $findOutput = Invoke-Wsl "find $MOUNT_BASE -mindepth 2 -maxdepth 2"
 
 if ($findOutput) {
@@ -301,82 +418,4 @@ if ($findOutput) {
 } else {
     Write-Warning "No mountpoints found under $MOUNT_BASE. Something may be wrong."
 }
-
 Write-Host ""
-
-# --- Create .bash_aliases_1 with cd2* aliases (not installing) ---
-
-Write-Host ""
-Write-Host "Generating .bash_aliases_1 (not installing)..."
-
-$aliasFile = Join-Path $PSScriptRoot ".bash_aliases_1"
-
-# Start fresh (ASCII, but CRLF because of PS 5.1)
-"" | Set-Content $aliasFile -Encoding Ascii
-
-foreach ($dev in $runtime) {
-
-    if ($dev.mountStatus -ne "success") { continue }
-
-    $diskNum    = $dev.DiskNumber
-    $devType    = $dev.DevType
-    $mountLabel = $dev.MountLabel
-
-    # Successful partitions
-    $parts = @($dev.Partitions | Where-Object { $_.MountRequired -and $_.MountStatus -eq "success" })
-
-    # Determine prefix and alias number
-    if ($devType -eq "VirtualVhdx") {
-        if ($mountLabel -match "\d+$") {
-            $N = $Matches[0]
-        } else {
-            $N = $diskNum
-        }
-        $prefix      = "v"
-        $aliasNumber = $N
-    }
-    else {
-        $prefix      = "d"
-        $aliasNumber = $diskNum
-    }
-
-    # Zero or one partition
-    if ($parts.Count -le 1) {
-        Add-Content -Encoding Ascii $aliasFile "alias cd2${prefix}${aliasNumber}='cd /mnt/wsl/${mountLabel}'"
-        continue
-    }
-
-    # Multiple partitions
-    foreach ($pm in $parts) {
-        $pLabel = $pm.PartitionMountLabel
-        $pNum   = $pm.PartitionNumber
-        Add-Content -Encoding Ascii $aliasFile "alias cd2${prefix}${aliasNumber}p${pNum}='cd /mnt/wsl/${pLabel}'"
-    }
-}
-
-Write-Host "Alias file created at: $aliasFile"
-Write-Host ""
-
-
-# Copy into ramdisk0 (PHYSICALDRIVE5 PhysicalRamDisk)
-#$ramdisk = $runtime | Where-Object {
-#    $_.DevType -eq "PhysicalRamDisk" -and
-#    $_.Path -eq "\\.\PHYSICALDRIVE5" -and
-#    $_.mountStatus -eq "success"
-#}
-#
-#if ($ramdisk) {
-#	$mountPath = "/mnt/wsl/$($ramdisk.MountLabel)"
-#	$owner = wsl -d Ubuntu-24.04 -e stat -c %U $mountPath
-#	if ($owner -eq "root") {
-#		Write-Host "→ Fixing ownership on $mountPath"
-#		wsl -d Ubuntu-24.04 -e sudo chown -R kflyn:kflyn $mountPath
-#	} else {
-#		Write-Host "→ Ownership already correct ($owner), skipping chown"
-#	}
-#}
-
-$aliasSrc  = Join-Path $PSScriptRoot ".bash_aliases_1"
-$aliasDest = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
-Copy-Item $aliasSrc $aliasDest -Force
-Write-Host "Copied .bash_aliases_1 into $aliasDest"

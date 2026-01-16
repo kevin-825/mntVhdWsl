@@ -1,0 +1,6 @@
+
+alias cd2d5='cd /mnt/wsl/ramdisk0'
+alias cd2d1='cd /mnt/wsl/disk1_32g'
+alias cd2d2='cd /mnt/wsl/disk2_110g'
+alias cd2v0='cd /mnt/wsl/vhd0'
+alias cd2v1='cd /mnt/wsl/vhd1'

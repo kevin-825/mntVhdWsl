@@ -1,6 +1,33 @@
 
-alias cd2d5='cd /mnt/wsl/ramdisk0'
-alias cd2d1='cd /mnt/wsl/disk1_32g'
-alias cd2d2='cd /mnt/wsl/disk2_110g'
-alias cd2v0='cd /mnt/wsl/vhd0'
-alias cd2v1='cd /mnt/wsl/vhd1'
+alias cd2d='cd /mnt/wsl/vhd0'
+
+alias cd2d='cd /mnt/wsl/vhd1'
+
+alias cd2dp1='cd /mnt/wsl/vhd2_test_p1'
+
+alias cd2dp2='cd /mnt/wsl/vhd2_test_p2'
+
+alias cd2dp3='cd /mnt/wsl/vhd2_test_p3'
+
+alias cd2dp4='cd /mnt/wsl/vhd2_test_p4'
+
+alias cd2dp5='cd /mnt/wsl/vhd2_test_p5'
+
+alias cd2d1='cd /mnt/wsl/disk1'
+
+alias cd2d2='cd /mnt/wsl/disk2'
+
+alias cd2d5='cd /mnt/wsl/ramdisk5'
+
+dockerVolumes="\
+-v /mnt/wsl/vhd0:/mnt/wsl/vhd0 \
+-v /mnt/wsl/vhd1:/mnt/wsl/vhd1 \
+-v /mnt/wsl/vhd2_test_p1:/mnt/wsl/vhd2_test_p1 \
+-v /mnt/wsl/vhd2_test_p2:/mnt/wsl/vhd2_test_p2 \
+-v /mnt/wsl/vhd2_test_p3:/mnt/wsl/vhd2_test_p3 \
+-v /mnt/wsl/vhd2_test_p4:/mnt/wsl/vhd2_test_p4 \
+-v /mnt/wsl/vhd2_test_p5:/mnt/wsl/vhd2_test_p5 \
+-v /mnt/wsl/disk1:/mnt/wsl/disk1 \
+-v /mnt/wsl/disk2:/mnt/wsl/disk2 \
+-v /mnt/wsl/ramdisk5:/mnt/wsl/ramdisk5 \
+"

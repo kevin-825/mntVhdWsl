@@ -1,44 +1,115 @@
-{
-  "Devices": [
-    {
-      "Path": "\\\\.\\PHYSICALDRIVE5",
-      "DevType": "PhysicalRamDisk",
-      "MountLabel": "ramdisk0",
-      "OpMode": "EraseWholeDiskExt4",
-      "PartitionsNeedMount": [1],
-      "mountStatus": "unknown"
-    },
-    {
-      "Path": "\\\\.\\PHYSICALDRIVE1",
-      "DevType": "PhysicalHardDisk",
-      "MountLabel": "disk1_32g",
-      "OpMode": "MountAllExt4",
-      "PartitionsNeedMount": [1],
-      "mountStatus": "unknown"
-    },
-    {
-      "Path": "\\\\.\\PHYSICALDRIVE2",
-      "DevType": "PhysicalHardDisk",
-      "MountLabel": "disk2_110g",
-      "OpMode": "MountAllExt4",
-      "PartitionsNeedMount": [1],
-      "mountStatus": "unknown"
-    },
-    {
-      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\Shared_v0.vhdx",
-      "DevType": "VirtualVhdx",
-      "MountLabel": "vhd0",
-      "OpMode": "MountAllExt4",
-      "PartitionsNeedMount": [],
-      "mountStatus": "unknown"
-    },
-    {
-      "Path": "\\\\?\\D:\\VirtualMachines\\vhds\\Share1.vhdx",
-      "DevType": "VirtualVhdx",
-      "MountLabel": "vhd1",
-      "OpMode": "MountAllExt4",
-      "PartitionsNeedMount": [],
-      "mountStatus": "unknown"
-    }
-  ]
+﻿{
+    "MsftVHD":  [
+                    {
+                        "DiskNumber":  6,
+                        "UniqueId":  "6002248065D6F443E0C63CF5F5B8C641",
+                        "FriendlyName":  "Msft Virtual Disk",
+                        "DevType":  "MsftVHD",
+                        "Path":  "D:\\VirtualMachines\\vhds\\vhd0.vhdx",
+                        "SizeMB":  358400,
+                        "SizeGB":  350,
+                        "PartitionStyle":  "RAW",
+                        "MountLabel":  "vhd0",
+                        "MountStatus":  "unknown",
+                        "PartitionsNeedMount":  [
+
+                                                ]
+                    },
+                    {
+                        "DiskNumber":  7,
+                        "UniqueId":  "600224805C4DF60BCC9F8D87BEDD1902",
+                        "FriendlyName":  "Msft Virtual Disk",
+                        "DevType":  "MsftVHD",
+                        "Path":  "D:\\VirtualMachines\\vhds\\vhd1.vhdx",
+                        "SizeMB":  130048,
+                        "SizeGB":  127,
+                        "PartitionStyle":  "RAW",
+                        "MountLabel":  "vhd1",
+                        "MountStatus":  "unknown",
+                        "PartitionsNeedMount":  [
+
+                                                ]
+                    },
+                    {
+                        "DiskNumber":  8,
+                        "UniqueId":  "60022480895887FE7CA6127DDE85E28A",
+                        "FriendlyName":  "Msft Virtual Disk",
+                        "DevType":  "MsftVHD",
+                        "Path":  "D:\\VirtualMachines\\vhds\\vhd2_test.vhdx",
+                        "SizeMB":  12288,
+                        "SizeGB":  12,
+                        "PartitionStyle":  "GPT",
+                        "MountLabel":  "vhd2_test",
+                        "MountStatus":  "unknown",
+                        "PartitionsNeedMount":  [
+                                                    1,
+                                                    2,
+                                                    3,
+                                                    4,
+                                                    5
+                                                ]
+                    },
+                    {
+                        "DiskNumber":  9,
+                        "UniqueId":  "600224808D3195CE2FE74649DFC18C9E",
+                        "FriendlyName":  "Msft Virtual Disk",
+                        "DevType":  "MsftVHD",
+                        "Path":  "D:\\VirtualMachines\\vhds\\vhd3_test.vhdx",
+                        "SizeMB":  1024,
+                        "SizeGB":  1,
+                        "PartitionStyle":  "RAW",
+                        "MountLabel":  "vhd3_test",
+                        "MountStatus":  "unknown",
+                        "PartitionsNeedMount":  [
+
+                                                ]
+                    }
+                ],
+    "Physical":  [
+                     {
+                         "DiskNumber":  1,
+                         "UniqueId":  "eui.5CD2E47C8ED00100",
+                         "FriendlyName":  "INTEL MEMPEK1J032GA",
+                         "DevType":  "PhysicalHardDisk",
+                         "Path":  null,
+                         "SizeMB":  27905,
+                         "SizeGB":  27.25,
+                         "PartitionStyle":  "GPT",
+                         "MountLabel":  "disk1",
+                         "MountStatus":  "unknown",
+                         "PartitionsNeedMount":  [
+                                                     1
+                                                 ]
+                     },
+                     {
+                         "DiskNumber":  2,
+                         "UniqueId":  "eui.5CD2E4AE52AF0100",
+                         "FriendlyName":  "INTEL SSDPEK1A118GA",
+                         "DevType":  "PhysicalHardDisk",
+                         "Path":  null,
+                         "SizeMB":  112925,
+                         "SizeGB":  110.28,
+                         "PartitionStyle":  "GPT",
+                         "MountLabel":  "disk2",
+                         "MountStatus":  "unknown",
+                         "PartitionsNeedMount":  [
+                                                     1
+                                                 ]
+                     },
+                     {
+                         "DiskNumber":  5,
+                         "UniqueId":  "URDVHD00",
+                         "FriendlyName":  "ieung Ultra RAMDisk",
+                         "DevType":  "PhysicalRamDisk",
+                         "Path":  null,
+                         "SizeMB":  41000,
+                         "SizeGB":  40.04,
+                         "PartitionStyle":  "MBR",
+                         "MountLabel":  "ramdisk5",
+                         "MountStatus":  "unknown",
+                         "PartitionsNeedMount":  [
+
+                                                 ]
+                     }
+                 ]
 }
