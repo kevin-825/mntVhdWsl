@@ -337,7 +337,7 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
         )
 
         # Determine prefix and alias number
-        if ($devType -eq "VirtualVhdx") {
+        if ($devType -eq "MsftVHD") {
             if ($mountLabel -match "\d+$") {
                 $N = $Matches[0]
             } else {

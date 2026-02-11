@@ -35,105 +35,6 @@
                         "Partitions":  [
 
                                        ]
-                    },
-                    {
-                        "UniqueId":  "60022480895887FE7CA6127DDE85E28A",
-                        "DevType":  "MsftVHD",
-                        "Path":  "D:\\VirtualMachines\\vhds\\vhd2_test.vhdx",
-                        "MountLabel":  "vhd2_test",
-                        "PartitionsNeedMount":  [
-                                                    1,
-                                                    2,
-                                                    3,
-                                                    4,
-                                                    5
-                                                ],
-                        "SizeMB":  12288,
-                        "SizeGB":  12,
-                        "PartitionStyle":  "GPT",
-                        "DiskNumber":  null,
-                        "PartitionTotalCnt":  5,
-                        "mountStatus":  "success",
-                        "Partitions":  [
-                                           {
-                                               "PartitionNumber":  1,
-                                               "SizeMB":  3071,
-                                               "SizeGB":  3,
-                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                               "MbrType":  null,
-                                               "Type":  "Unknown",
-                                               "FsType":  null,
-                                               "MountRequired":  true,
-                                               "PartitionMountLabel":  "vhd2_test_p1",
-                                               "PartitionMountStatus":  "success"
-                                           },
-                                           {
-                                               "PartitionNumber":  2,
-                                               "SizeMB":  3072,
-                                               "SizeGB":  3,
-                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                               "MbrType":  null,
-                                               "Type":  "Unknown",
-                                               "FsType":  null,
-                                               "MountRequired":  true,
-                                               "PartitionMountLabel":  "vhd2_test_p2",
-                                               "PartitionMountStatus":  "success"
-                                           },
-                                           {
-                                               "PartitionNumber":  3,
-                                               "SizeMB":  3071,
-                                               "SizeGB":  3,
-                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                               "MbrType":  null,
-                                               "Type":  "Unknown",
-                                               "FsType":  null,
-                                               "MountRequired":  true,
-                                               "PartitionMountLabel":  "vhd2_test_p3",
-                                               "PartitionMountStatus":  "success"
-                                           },
-                                           {
-                                               "PartitionNumber":  4,
-                                               "SizeMB":  1526,
-                                               "SizeGB":  1.49,
-                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                               "MbrType":  null,
-                                               "Type":  "Unknown",
-                                               "FsType":  null,
-                                               "MountRequired":  true,
-                                               "PartitionMountLabel":  "vhd2_test_p4",
-                                               "PartitionMountStatus":  "success"
-                                           },
-                                           {
-                                               "PartitionNumber":  5,
-                                               "SizeMB":  1544,
-                                               "SizeGB":  1.51,
-                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                               "MbrType":  null,
-                                               "Type":  "Unknown",
-                                               "FsType":  null,
-                                               "MountRequired":  true,
-                                               "PartitionMountLabel":  "vhd2_test_p5",
-                                               "PartitionMountStatus":  "success"
-                                           }
-                                       ]
-                    },
-                    {
-                        "UniqueId":  "600224808D3195CE2FE74649DFC18C9E",
-                        "DevType":  "MsftVHD",
-                        "Path":  "D:\\VirtualMachines\\vhds\\vhd3_test.vhdx",
-                        "MountLabel":  "vhd3_test",
-                        "PartitionsNeedMount":  [
-
-                                                ],
-                        "SizeMB":  1024,
-                        "SizeGB":  1,
-                        "PartitionStyle":  "RAW",
-                        "DiskNumber":  null,
-                        "PartitionTotalCnt":  0,
-                        "mountStatus":  "failed",
-                        "Partitions":  [
-
-                                       ]
                     }
                 ],
     "Physical":  [
@@ -203,25 +104,14 @@
                          "PartitionsNeedMount":  [
 
                                                  ],
-                         "SizeMB":  41000,
-                         "SizeGB":  40.04,
-                         "PartitionStyle":  "MBR",
+                         "SizeMB":  32800,
+                         "SizeGB":  32.03,
+                         "PartitionStyle":  "RAW",
                          "DiskNumber":  5,
-                         "PartitionTotalCnt":  1,
+                         "PartitionTotalCnt":  0,
                          "mountStatus":  "success",
                          "Partitions":  [
-                                            {
-                                                "PartitionNumber":  1,
-                                                "SizeMB":  41000,
-                                                "SizeGB":  40.04,
-                                                "GptType":  null,
-                                                "MbrType":  7,
-                                                "Type":  "IFS",
-                                                "FsType":  null,
-                                                "MountRequired":  false,
-                                                "PartitionMountLabel":  "ramdisk5",
-                                                "PartitionMountStatus":  "pending"
-                                            }
+
                                         ]
                      }
                  ]

@@ -68,9 +68,9 @@
                          "FriendlyName":  "ieung Ultra RAMDisk",
                          "DevType":  "PhysicalRamDisk",
                          "Path":  null,
-                         "SizeMB":  32800,
-                         "SizeGB":  32.03,
-                         "PartitionStyle":  "RAW",
+                         "SizeMB":  41000,
+                         "SizeGB":  40.04,
+                         "PartitionStyle":  "MBR",
                          "MountLabel":  "ramdisk5",
                          "MountStatus":  "unknown",
                          "PartitionsNeedMount":  [

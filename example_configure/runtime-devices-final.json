@@ -104,14 +104,25 @@
                          "PartitionsNeedMount":  [
 
                                                  ],
-                         "SizeMB":  32800,
-                         "SizeGB":  32.03,
-                         "PartitionStyle":  "RAW",
+                         "SizeMB":  41000,
+                         "SizeGB":  40.04,
+                         "PartitionStyle":  "MBR",
                          "DiskNumber":  5,
-                         "PartitionTotalCnt":  0,
+                         "PartitionTotalCnt":  1,
                          "mountStatus":  "success",
                          "Partitions":  [
-
+                                            {
+                                                "PartitionNumber":  1,
+                                                "SizeMB":  41000,
+                                                "SizeGB":  40.04,
+                                                "GptType":  null,
+                                                "MbrType":  7,
+                                                "Type":  "IFS",
+                                                "FsType":  null,
+                                                "MountRequired":  false,
+                                                "PartitionMountLabel":  "ramdisk5",
+                                                "PartitionMountStatus":  "pending"
+                                            }
                                         ]
                      }
                  ]
