@@ -22,7 +22,7 @@ Set-Location $PSScriptRoot
 $root = $PSScriptRoot
 
 # --- Script paths ---
-$genConfig   = Join-Path $root "generateWsl2MountConfig.ps1"
+$genConfig   = Join-Path $root "configure.ps1"
 $genRuntime  = Join-Path $root "generate-runtime.ps1"
 $procRuntime = Join-Path $root "process-runtime.ps1"
 
