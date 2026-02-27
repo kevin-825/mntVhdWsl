@@ -3,6 +3,15 @@
 # Entry point to run all WSL2 disk‑mount pipeline scripts
 # ============================================================
 
+# --- Helper Functions ---
+function Test-FileEmpty {
+    param ([string]$Path)
+    # Returns true if file does not exist OR is 0 bytes
+    if (-not (Test-Path $Path)) { return $true }
+    if ((Get-Item $Path).Length -eq 0) { return $true }
+    return $false
+}
+
 # --- Ensure running as Administrator ---
 $IsAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -15,27 +24,15 @@ if (-not $IsAdmin) {
 
 Write-Host "Running as admin now."
 Write-Host "=== setup.ps1 starting ==="
-Write-Host ""
 
-# --- Move to script directory ---
+# --- Paths & Configuration ---
 Set-Location $PSScriptRoot
-$root = $PSScriptRoot
+$root        = $PSScriptRoot
+$devicesJson = Join-Path $root "devices.json"
 
-# --- Script paths ---
 $genConfig   = Join-Path $root "configure.ps1"
 $genRuntime  = Join-Path $root "generate-runtime.ps1"
 $procRuntime = Join-Path $root "process-runtime.ps1"
-
-# --- Check existence ---
-if (-not (Test-Path $genConfig)) {
-    throw "generateWsl2MountConfig.ps1 not found in: $root"
-}
-if (-not (Test-Path $genRuntime)) {
-    throw "generate-runtime.ps1 not found in: $root"
-}
-if (-not (Test-Path $procRuntime)) {
-    throw "process-runtime.ps1 not found in: $root"
-}
 
 # --- Reset WSL state ---
 Write-Host "Shutting down WSL..."
@@ -43,41 +40,37 @@ wsl --shutdown
 Start-Sleep -Seconds 1
 
 # ------------------------------------------------------------
-# 1. generateWsl2MountConfig.ps1
+# 1. configure.ps1 (Conditional Execution)
 # ------------------------------------------------------------
-Write-Host ""
-Write-Host "Running generateWsl2MountConfig.ps1..."
-& $genConfig
-
-if ($LASTEXITCODE -ne 0) {
-    throw "generateWsl2MountConfig.ps1 failed with exit code $LASTEXITCODE"
+if (Test-FileEmpty -Path $devicesJson) {
+    Write-Host "devices.json is missing or empty. Running configure.ps1..." -ForegroundColor Cyan
+    if (Test-Path $genConfig) {
+        & $genConfig
+        if ($LASTEXITCODE -ne 0) { throw "configure.ps1 failed." }
+    } else {
+        throw "Required script missing: $genConfig"
+    }
+} else {
+    Write-Host "Valid devices.json found. Skipping configuration." -ForegroundColor Green
 }
 
 # ------------------------------------------------------------
 # 2. generate-runtime.ps1
 # ------------------------------------------------------------
-Write-Host ""
-Write-Host "Running generate-runtime.ps1..."
-& $genRuntime
-
-if ($LASTEXITCODE -ne 0) {
-    throw "generate-runtime.ps1 failed with exit code $LASTEXITCODE"
+Write-Host "`nRunning generate-runtime.ps1..."
+if (Test-Path $genRuntime) {
+    & $genRuntime
+    if ($LASTEXITCODE -ne 0) { throw "generate-runtime.ps1 failed." }
 }
 
 # ------------------------------------------------------------
 # 3. process-runtime.ps1
 # ------------------------------------------------------------
-Write-Host ""
-Write-Host "Running process-runtime.ps1..."
-& $procRuntime
-
-if ($LASTEXITCODE -ne 0) {
-    throw "process-runtime.ps1 failed with exit code $LASTEXITCODE"
+Write-Host "`nRunning process-runtime.ps1..."
+if (Test-Path $procRuntime) {
+    & $procRuntime
+    if ($LASTEXITCODE -ne 0) { throw "process-runtime.ps1 failed." }
 }
 
-Write-Host ""
-Write-Host "=== setup.ps1 completed successfully ==="
-Write-Host ""
-
-# --- Drop into WSL home directory ---
+Write-Host "`n=== setup.ps1 completed successfully ==="
 wsl.exe --cd ~
