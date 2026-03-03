@@ -75,6 +75,19 @@ function Find-LinuxDiskByUniqueId {
 # ------------------------------------------------------------
 # Special-case handler for PhysicalRamDisk
 # ------------------------------------------------------------
+function Test-DriveExists {
+    param (
+        [string]$DrivePath = "\\.\PHYSICALDRIVE5"
+    )
+
+    # Use Get-CimInstance for modern, fast hardware querying
+    # We escape the backslashes for the WQL filter
+    $escapedPath = $DrivePath.Replace("\", "\\")
+    $disk = Get-CimInstance -ClassName Win32_DiskDrive -Filter "DeviceID = '$escapedPath'"
+    
+    return [bool]$disk
+}
+
 function Handle-RamDiskSpecialCase {
     param($dev)
 
@@ -272,6 +285,14 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
 			Write-Host "  [skip] Already mounted. Skipping."
 			continue
 		}
+
+        # 1. Immediate Check (The Guard)
+        $physicalDrivePath = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
+        #check it's not MsftVHD and exists as a physical drive before proceeding to switch
+        if ($dev.DevType -ne "MsftVHD" -and -not (Test-DriveExists -DrivePath $physicalDrivePath)) {
+            Write-Warning "Device $physicalDrivePath not found. Skipping $($dev.MountLabel)."
+            continue 
+        }
 
         switch ($dev.DevType) {
 		

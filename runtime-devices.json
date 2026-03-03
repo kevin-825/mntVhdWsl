@@ -109,7 +109,7 @@
                          "PartitionStyle":  "RAW",
                          "DiskNumber":  5,
                          "PartitionTotalCnt":  0,
-                         "mountStatus":  "success",
+                         "mountStatus":  "pending",
                          "Partitions":  [
 
                                         ]
