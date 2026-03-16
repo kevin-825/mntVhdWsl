@@ -108,10 +108,21 @@
                          "SizeGB":  32.03,
                          "PartitionStyle":  "RAW",
                          "DiskNumber":  5,
-                         "PartitionTotalCnt":  0,
-                         "mountStatus":  "pending",
+                         "PartitionTotalCnt":  1,
+                         "mountStatus":  "success",
                          "Partitions":  [
-
+                                            {
+                                                "PartitionNumber":  1,
+                                                "SizeMB":  35840,
+                                                "SizeGB":  35,
+                                                "GptType":  null,
+                                                "MbrType":  7,
+                                                "Type":  "IFS",
+                                                "FsType":  null,
+                                                "MountRequired":  false,
+                                                "PartitionMountLabel":  "ramdisk5",
+                                                "PartitionMountStatus":  "pending"
+                                            }
                                         ]
                      }
                  ]

@@ -14,7 +14,8 @@ Rules:
 
 param(
     [string]$RuntimePath       = ".\runtime-devices.json",
-    [string]$OutputRuntimePath = ".\runtime-devices-final.json"
+    [string]$OutputRuntimePath = ".\runtime-devices-final.json",
+    [switch]$genf
 )
 
 Set-StrictMode -Version Latest
@@ -327,6 +328,28 @@ Write-Host ""
 Write-Host "Final runtime written to: $OutputRuntimePath"
 Write-Host "=== process-runtime.ps1 completed ==="
 
+
+# ------------------------------------------------------------
+# Verify mountpoints inside WSL
+# ------------------------------------------------------------
+Write-Host "Verifying mounted devices inside WSL..."
+Write-Host ""
+
+$MOUNT_BASE = "/mnt/wsl"
+$findOutput = Invoke-Wsl "find $MOUNT_BASE -mindepth 2 -maxdepth 2"
+
+if ($findOutput) {
+    Write-Host $findOutput
+} else {
+    Write-Warning "No mountpoints found under $MOUNT_BASE. Something may be wrong."
+}
+Write-Host ""
+
+if (-not $genf) {
+	Write-Host "The genf flag is FALSE. Skipping alias file generation."
+    exit 0
+}
+
 # ------------------------------------------------------------
 # Generate .bash_aliases_1 and dockerVolumes variable
 # ------------------------------------------------------------
@@ -413,30 +436,19 @@ foreach ($line in $dockerList) {
 }
 Add-Content -Encoding Ascii $aliasFile '"'
 
+Add-Content -Encoding Ascii $aliasFile 'export dockerVolumes'
+Add-Content -Encoding Ascii $aliasFile ''
+
 Write-Host "Alias file created at: $aliasFile"
 Write-Host ""
 # ------------------------------------------------------------
 # Copy alias file into WSL home
 # ------------------------------------------------------------
-$aliasSrc  = Join-Path $PSScriptRoot ".bash_aliases_1"
-$aliasDest = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+#$aliasSrc  = Join-Path $PSScriptRoot ".bash_aliases_1"
+#$aliasDest = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+#
+#Copy-Item $aliasSrc $aliasDest -Force
+#Write-Host "Copied .bash_aliases_1 into $aliasDest"
+#Write-Host ""
 
-Copy-Item $aliasSrc $aliasDest -Force
-Write-Host "Copied .bash_aliases_1 into $aliasDest"
-Write-Host ""
 
-# ------------------------------------------------------------
-# Verify mountpoints inside WSL
-# ------------------------------------------------------------
-Write-Host "Verifying mounted devices inside WSL..."
-Write-Host ""
-
-$MOUNT_BASE = "/mnt/wsl"
-$findOutput = Invoke-Wsl "find $MOUNT_BASE -mindepth 2 -maxdepth 2"
-
-if ($findOutput) {
-    Write-Host $findOutput
-} else {
-    Write-Warning "No mountpoints found under $MOUNT_BASE. Something may be wrong."
-}
-Write-Host ""
