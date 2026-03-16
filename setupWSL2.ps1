@@ -2,6 +2,16 @@
 # setup.ps1
 # Entry point to run all WSL2 disk‑mount pipeline scripts
 # ============================================================
+param(
+    [switch]$genf
+)
+
+Write-Host "genf value = $genf"
+
+
+#include other script
+# 1. Dot source compare.ps1 to load its functions into memory
+. "$PSScriptRoot\compare.ps1"
 
 # --- Helper Functions ---
 function Test-FileEmpty {
@@ -66,11 +76,19 @@ if (Test-Path $genRuntime) {
 # ------------------------------------------------------------
 # 3. process-runtime.ps1
 # ------------------------------------------------------------
+Write-Host "`genf flag is $genf..."
 Write-Host "`nRunning process-runtime.ps1..."
 if (Test-Path $procRuntime) {
-    & $procRuntime
+    & $procRuntime -genf:$genf
     if ($LASTEXITCODE -ne 0) { throw "process-runtime.ps1 failed." }
 }
+
+# --- Execution ---
+
+$localFile  = ".\.bash_aliases_1"
+$targetFile = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+
+Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile
 
 Write-Host "`n=== setup.ps1 completed successfully ==="
 wsl.exe --cd ~
