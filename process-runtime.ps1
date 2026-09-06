@@ -100,7 +100,7 @@ function Handle-RamDiskSpecialCase {
     # 1. Try whole-disk mount
     # ------------------------------------------------------------
     Write-Host "  [ramdisk] Trying whole-disk mount..."
-    & wsl.exe --mount $phy --name $dev.MountLabel
+    & wsl.exe --mount $phy --name $dev.MountLabel --options "noatime"
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  [ramdisk] Whole-disk mount succeeded."
@@ -119,7 +119,7 @@ function Handle-RamDiskSpecialCase {
     if ($dev.Partitions.Count -gt 0) {
         $partNum = $dev.Partitions[0].PartitionNumber
         Write-Host "  [ramdisk] Trying partition mount..."
-        & wsl.exe --mount $phy --partition $partNum --name $dev.MountLabel
+        & wsl.exe --mount $phy --partition $partNum --name $dev.MountLabel --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  [ramdisk] Partition mount succeeded."
@@ -157,7 +157,7 @@ function Handle-RamDiskSpecialCase {
 
     Write-Host "  [ramdisk] mkfs.ext4 succeeded. Re-mounting..."
 
-    & wsl.exe --mount $phy --name $dev.MountLabel
+    & wsl.exe --mount $phy --name $dev.MountLabel --options "noatime"
 
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "  [ramdisk] Mount after format failed."
@@ -185,7 +185,7 @@ function Handle-Physical {
     # Case 1: whole disk mount
     if ($dev.PartitionTotalCnt -eq 0) {
         Write-Host "  Mounting whole disk as '$($dev.MountLabel)'..."
-        & wsl.exe --mount $phy --name $dev.MountLabel
+        & wsl.exe --mount $phy --name $dev.MountLabel --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
             $dev.mountStatus = "success"
@@ -203,7 +203,7 @@ function Handle-Physical {
         $pLabel = $pm.PartitionMountLabel
 
         Write-Host "  Mounting partition #$pNum as '$pLabel'..."
-        & wsl.exe --mount $phy --name $pLabel --partition $pNum
+        & wsl.exe --mount $phy --name $pLabel --partition $pNum --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
             $pm.PartitionMountStatus = "success"
@@ -231,7 +231,7 @@ function Handle-VHDX {
     # Case 1: whole disk mount
     if ($dev.PartitionTotalCnt -eq 0) {
         Write-Host "  Mounting whole VHDX as '$($dev.MountLabel)'..."
-        & wsl.exe --mount $path --vhd --name $dev.MountLabel
+        & wsl.exe --mount $path --vhd --name $dev.MountLabel --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
             $dev.mountStatus = "success"
@@ -249,7 +249,7 @@ function Handle-VHDX {
         $pLabel = $pm.PartitionMountLabel
 
         Write-Host "  Mounting VHDX partition #$pNum as '$pLabel'..."
-        & wsl.exe --mount $path --vhd --name $pLabel --partition $pNum
+        & wsl.exe --mount $path --vhd --name $pLabel --partition $pNum --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
             $pm.PartitionMountStatus = "success"

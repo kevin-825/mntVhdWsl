@@ -91,4 +91,4 @@ $targetFile = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
 Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile
 
 Write-Host "`n=== setup.ps1 completed successfully ==="
-wsl.exe --cd ~
+#wsl.exe --cd ~

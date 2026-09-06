@@ -1,0 +1,86 @@
+function Handle-RamDiskSpecialCase {
+    param($dev)
+
+    Write-Host "  [ramdisk] Special-case handling for $($dev.MountLabel)"
+
+    $phy = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
+
+    # ------------------------------------------------------------
+    # Step 1: Try to mount as-is (handles already-ext4 cases)
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] Trying direct WSL mount..."
+    & wsl.exe --mount $phy --name $dev.MountLabel
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [ramdisk] Direct mount succeeded (already ext4)."
+        foreach ($pm in $dev.Partitions) {
+            if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+        }
+        $dev.mountStatus = "success"
+        return
+    }
+
+    Write-Host "  [ramdisk] Direct mount failed, proceeding to reformat as ext4..."
+
+    # ------------------------------------------------------------
+    # Step 2: Ensure disk is attached so Linux can see it
+    # (mount failure may or may not have attached it; we force attach)
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] Attaching RAM disk into WSL for mkfs..."
+    & wsl.exe --attach $phy 2>$null
+
+    # Even if attach fails because it's already attached, we continue and try lsblk
+    # We only bail out if we truly can't see it from Linux.
+
+    # ------------------------------------------------------------
+    # Step 3: Resolve /dev/sdX via UniqueId
+    # ------------------------------------------------------------
+    $linuxDisk = Find-LinuxDiskByUniqueId -UniqueId $dev.UniqueId
+    if (-not $linuxDisk) {
+        Write-Warning "  [ramdisk] Cannot resolve Linux disk. Marking failed."
+        $dev.mountStatus = "failed"
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
+        return
+    }
+
+    # ------------------------------------------------------------
+    # Step 4: Format whole disk as EXT4
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] mkfs.ext4 -F $linuxDisk"
+    & wsl.exe bash -lc "sudo mkfs.ext4 -F $linuxDisk"
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "  [ramdisk] mkfs.ext4 failed."
+        $dev.mountStatus = "failed"
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
+        return
+    }
+
+    Write-Host "  [ramdisk] mkfs.ext4 succeeded."
+
+    # ------------------------------------------------------------
+    # Step 5: Detach and cleanly re-mount as ext4
+    # ------------------------------------------------------------
+    Write-Host "  [ramdisk] Detaching before final mount..."
+    & wsl.exe --unmount $phy 2>$null
+
+    Write-Host "  [ramdisk] Mounting ext4 RAM disk..."
+    & wsl.exe --mount $phy --name $dev.MountLabel
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "  [ramdisk] Final mount failed."
+        $dev.mountStatus = "failed"
+        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
+        return
+    }
+
+    # ------------------------------------------------------------
+    # Step 6: Mark success
+    # ------------------------------------------------------------
+    foreach ($pm in $dev.Partitions) {
+        if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+    }
+
+    $dev.mountStatus = "success"
+    Write-Host "  [ramdisk] Mounted successfully as ext4."
+}
