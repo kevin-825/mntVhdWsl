@@ -96,39 +96,11 @@ if (Test-Path $procRuntime) {
 
 $localFile  = ".\.bash_aliases_1"
 
-# Get all installed distros
-$distros = wsl.exe -l -q |
-    ForEach-Object { $_.Trim() } |
-    Where-Object { $_ -ne "" } |
-    ForEach-Object { $_ -replace '[^\x20-\x7E]', '' }
-
-Write-Host "Found distros: $($distros -join ', ')"
-foreach ($distro in $distros) {
-
-    Write-Host "===$distro==="
-
-    # Get Linux users (UID >= 1000)
-    $passwd = wsl.exe -d $distro -- cat /etc/passwd
-    #Write-Host "Contents of /etc/passwd: $($passwd -join "`n")"
-    $users = $passwd |
-    ForEach-Object { $_.Trim() } |
-    Select-String "^[^:]+:[^:]*:[1-9][0-9]{3}:" |
-    ForEach-Object { ($_ -split ":")[0] }
-
-    
-    Write-Host "Found users: $($users -join ', ')"
-
-    foreach ($user in $users) {
-        Write-Host "  -> Syncing for user: $user"
-
-        $targetFile = "\\wsl$\$distro\home\$user\.bash_aliases_1"
-
-        Sync-FileIfChanged_contentbased `
-            -SourcePath $localFile `
-            -TargetPath $targetFile
-    }
-}
+$targetFile0 = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+$targetFile1 = "\\wsl$\Ubuntu\home\kevin\.bash_aliases_1"
+Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile0
+Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile1
 
 Write-Host "`n=== setup.ps1 completed successfully ==="
-Invoke-Wsl "df -h | grep /mnt/wsl/"
+Invoke-Wsl "df -hT | grep -E '/mnt/wsl/|Used'"
 wsl.exe --cd ~
