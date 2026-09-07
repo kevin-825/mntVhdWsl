@@ -22,6 +22,11 @@ function Test-FileEmpty {
     return $false
 }
 
+function Invoke-Wsl {
+    param([string]$Command)
+    return (& wsl.exe bash -lc "$Command" 2>$null) -join "`n"
+}
+
 # --- Ensure running as Administrator ---
 $IsAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -121,4 +126,5 @@ foreach ($distro in $distros) {
 }
 
 Write-Host "`n=== setup.ps1 completed successfully ==="
-pause "Press any key to exit..."
+Invoke-Wsl "df -h | grep /mnt/wsl/"
+wsl.exe --cd ~
