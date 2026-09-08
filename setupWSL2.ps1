@@ -33,11 +33,7 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal] `
 ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $IsAdmin) {
-    $elevatedArgs = "`"$PSCommandPath`""
-    if ($genf) {
-        $elevatedArgs += " -genf"
-    }
-    Start-Process powershell.exe -Verb RunAs -ArgumentList $elevatedArgs
+    Start-Process powershell.exe -Verb RunAs -ArgumentList "`"$PSCommandPath`""
     exit
 }
 
