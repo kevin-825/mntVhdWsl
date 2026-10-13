@@ -96,9 +96,9 @@ if (Test-Path $procRuntime) {
 
 $localFile  = ".\.bash_aliases_1"
 
-$targetFile0 = "\\wsl$\Ubuntu-24.04\home\kflyn\.bash_aliases_1"
+
 $targetFile1 = "\\wsl$\Ubuntu\home\kevin\.bash_aliases_1"
-Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile0
+
 Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile1
 
 Write-Host "`n=== setup.ps1 completed successfully ==="
