@@ -367,8 +367,7 @@ function CheckInitializeEmptyDisk {
         }
         # Get the WSL-compatible path of your current Windows project directory
         # FIXED: Use $PWD.ProviderPath to prevent backslash stripping
-        $winPath = $PWD.ProviderPath
-        $winPath = $winPath -replace '\\', '/'
+        $winPath = $PWD.ProviderPath -replace '\\', '/'
         Write-Host "winPath: $winPath"
         $wslPathRaw = wsl.exe wslpath -u "$winPath" 2>&1
         

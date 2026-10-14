@@ -298,7 +298,6 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
         switch ($dev.DevType) {
 
             "RamDisk" {
-                Write-Host "111111111 Device: $($dev.MountLabel) (DevType=$($dev.DevType), Status=$($dev.mountStatus))"
                 Handle-Physical $dev
             }
 		
@@ -329,23 +328,6 @@ $runtime | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputRuntimePath
 Write-Host ""
 Write-Host "Final runtime written to: $OutputRuntimePath"
 Write-Host "=== process-runtime.ps1 completed ==="
-
-
-# ------------------------------------------------------------
-# Verify mountpoints inside WSL
-# ------------------------------------------------------------
-Write-Host "Verifying mounted devices inside WSL..."
-Write-Host ""
-
-$MOUNT_BASE = "/mnt/wsl"
-$findOutput = Invoke-Wsl "find $MOUNT_BASE -mindepth 2 -maxdepth 2"
-
-if ($findOutput) {
-    Write-Host $findOutput
-} else {
-    Write-Warning "No mountpoints found under $MOUNT_BASE. Something may be wrong."
-}
-Write-Host ""
 
 if (-not $genf) {
 	Write-Host "The genf flag is FALSE. Skipping alias file generation."

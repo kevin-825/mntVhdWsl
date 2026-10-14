@@ -136,6 +136,10 @@ $targetFile1 = "\\wsl$\Ubuntu\home\kevin\.bash_aliases_1"
 
 Sync-FileIfChanged_contentbased -SourcePath $localFile -TargetPath $targetFile1
 
+$winPath = $PWD.ProviderPath -replace '\\', '/'
+$wslPathRaw = wsl.exe wslpath -u "$winPath" 2>&1
+$wslProjectDir = $wslPathRaw.Trim()
+$wslUser = (wsl whoami).Trim()
+wsl.exe -u root bash -lc "cd '$wslProjectDir' && ./scripts/last_step.sh $wslUser"
 Write-Host "`n=== setup.ps1 completed successfully ==="
-Invoke-Wsl "df -hT | grep -E '/mnt/wsl/|Used'"
 wsl.exe --cd ~
