@@ -39,12 +39,12 @@ function Invoke-Wsl {
 }
 
 # ------------------------------------------------------------
-# Helper: find Linux disk node (/dev/sdX) by UniqueId ↔ ID_SERIAL_SHORT
+# Helper: find Linux disk node (/dev/sdX) by SerialNumber ↔ ID_SERIAL_SHORT
 # ------------------------------------------------------------
-function Find-LinuxDiskByUniqueId {
-    param([string]$UniqueId)
+function Find-LinuxDiskBySerialNumber {
+    param([string]$SerialNumber)
 
-    Write-Host "  [ramdisk] Resolving Linux disk for UniqueId=$UniqueId"
+    Write-Host "  [ramdisk] Resolving Linux disk for SerialNumber=$SerialNumber"
 
     $lsblkJson = Invoke-Wsl "lsblk -J -o NAME,TYPE"
     if (-not $lsblkJson) { return $null }
@@ -63,13 +63,13 @@ function Find-LinuxDiskByUniqueId {
 
         $short = ($line -split "=",2)[1].Trim()
 
-        if ($short -eq $UniqueId) {
-            Write-Host "  [ramdisk] Matched UniqueId=$UniqueId to /dev/$name"
+        if ($short -eq $SerialNumber) {
+            Write-Host "  [ramdisk] Matched SerialNumber=$SerialNumber to /dev/$name"
             return "/dev/$name"
         }
     }
 
-    Write-Warning "  [ramdisk] No Linux disk found for UniqueId=$UniqueId"
+    Write-Warning "  [ramdisk] No Linux disk found for SerialNumber=$SerialNumber"
     return $null
 }
 
@@ -85,7 +85,7 @@ function Test-DriveExists {
     # We escape the backslashes for the WQL filter
     $escapedPath = $DrivePath.Replace("\", "\\")
     $disk = Get-CimInstance -ClassName Win32_DiskDrive -Filter "DeviceID = '$escapedPath'"
-    
+    Write-Host "[Test-DriveExists] [bool]$disk"
     return [bool]$disk
 }
 
@@ -137,7 +137,7 @@ function Handle-RamDiskSpecialCase {
     # 3. Format whole disk and mount again
     # ------------------------------------------------------------
     Write-Host "  [ramdisk] Resolving Linux disk path for formatting..."
-    $linuxDisk = Find-LinuxDiskByUniqueId -UniqueId $dev.UniqueId
+    $linuxDisk = Find-LinuxDiskBySerialNumber -SerialNumber $dev.SerialNumber
     if (-not $linuxDisk) {
         Write-Warning "  [ramdisk] Cannot resolve Linux disk. Marking failed."
         $dev.mountStatus = "failed"
@@ -296,9 +296,10 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
         }
 
         switch ($dev.DevType) {
-		
-            "PhysicalRamDisk" {
-                Handle-RamDiskSpecialCase $dev
+
+            "RamDisk" {
+                Write-Host "111111111 Device: $($dev.MountLabel) (DevType=$($dev.DevType), Status=$($dev.mountStatus))"
+                Handle-Physical $dev
             }
 		
             "PhysicalHardDisk" {
@@ -315,6 +316,7 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
                 $dev.mountStatus = "error"
             }
         }
+        Write-Host "Device: $($dev.MountLabel) (DevType=$($dev.DevType), Status=$($dev.mountStatus))"
     }
 }
 

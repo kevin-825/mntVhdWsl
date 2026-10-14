@@ -1,4 +1,2 @@
-﻿D:\VirtualMachines\vhds\vhd0.vhdx
-D:\VirtualMachines\vhds\vhd1.vhdx
-
-
+D:\VM\VirtualHardDisks\vhd0.vhdx
+D:\VM\VirtualHardDisks\vhd1.vhdx

@@ -3,6 +3,10 @@
 # --------------------------------------------------
 # Helper: Disk & Partition Inspection
 # --------------------------------------------------
+
+$modulePath = Join-Path $PSScriptRoot "DiskTools.psm1"
+Import-Module $modulePath -Force
+
 function Get-DiskAndPartitionInfo {
     param ($Disk)
     
@@ -12,10 +16,12 @@ function Get-DiskAndPartitionInfo {
         foreach ($p in $parts) {
             $vol = Get-Volume -Partition $p -ErrorAction SilentlyContinue
             $rows += [PSCustomObject]@{
-                PartitionN  = if ($p.PartitionNumber) { $p.PartitionNumber } else { 'unknown' }
-                DriveLetter = if ($vol.DriveLetter) { $vol.DriveLetter } else { 'unknown' }
-                Label       = if ($vol.FileSystemLabel) { $vol.FileSystemLabel } else { 'unknown' }
-                FsType      = if ($vol.FileSystem) { $vol.FileSystem } else { 'unknown' }
+                "PartNum"   = $p.PartitionNumber
+                "DrvLtr"    = if ($p.DriveLetter) { $p.DriveLetter } else { "-" }
+                "Size  "    = FormatDiskSize -disk $p
+                "Label     "= if ($vol.FileSystemLabel) { $vol.FileSystemLabel } else { "" }
+                "FsType"    = $vol.FileSystem
+                "Info"      = $p.Type
             }
         }
     } catch { }
@@ -24,14 +30,22 @@ function Get-DiskAndPartitionInfo {
 }
 
 function Show-DiskDisplay {
-    param ($Disk, $PartitionRows)
+    param ($disk, $PartitionRows)
     
-    Write-Host ("DiskNumber:{0}  FriendlyName:`"{1}`"  UniqueID:{2}" -f $Disk.Number, $Disk.FriendlyName, $Disk.UniqueId)
-    $indent = "`t`t`t"
+    $partCount = @($partitions).Count
+    $diskSize = FormatDiskSize -disk $disk
+    $status = $disk.OperationalStatus
+    $busType = if ($disk.BusType) { $disk.BusType } else { "Unknown" }
+
+    Write-Host "DiskNum:$($disk.Number)  DiskName:`"$($disk.FriendlyName)`"" -ForegroundColor Cyan
+    Write-Host "SerialNumber:$($disk.SerialNumber)"
+    Write-Host "DiskSize: $diskSize  |  Bus: $busType  |  status: $status"
+    Write-Host "PartitionStyle:$($disk.PartitionStyle)  |  PartCount:$partCount"
+    #$indent = "`t"
     
     if ($PartitionRows) {
         $table = $PartitionRows | Format-Table -AutoSize | Out-String
-        $table -split "`r?`n" | Where-Object { $_.Trim() } | ForEach-Object { Write-Host ($indent + $_) }
+        $table | Where-Object { $_.Trim() } | ForEach-Object { Write-Host ($indent + $_) }
     } else {
         Write-Host ($indent + "PartitionN DriveLetter Label FsType")
         Write-Host ($indent + "---------- ----------- ----- ------")
@@ -47,19 +61,12 @@ function Show-DiskDisplay {
 function Get-PhysicalInventory {
     param ($ConfigFile)
     
-    $disks = Get-Disk | Where-Object BusType -ne 'File Backed Virtual' | Sort-Object Number
-    Write-Host "`n=== Physical Disks ==="
-    foreach ($d in $disks) {
-        $info = Get-DiskAndPartitionInfo -Disk $d
-        Show-DiskDisplay -Disk $d -PartitionRows $info
-    }
-
     $inputLine = ""
     if (Test-Path $ConfigFile) {
         $inputLine = Get-Content $ConfigFile -Raw
         Write-Host "Using saved physical disk selection: $inputLine"
     } else {
-        $inputLine = Read-Host "`nSelect physical devices (e.g. 6[1,2] 1[])"
+        $inputLine = Read-Host "`nSelect physical devices and it's partitions (e.g. 6[1,2] 1[])"
         $inputLine | Set-Content -Path $ConfigFile -Encoding UTF8
     }
 
@@ -74,20 +81,24 @@ function Get-PhysicalInventory {
                 $parts = $matches[2] -split ',' | ForEach-Object { [int]$_.Trim() } 
             }
 
+            $dev = Get-Disk -Number $diskNum -ErrorAction Stop
+            $ret=CheckInitializeEmptyDisk $dev -ErrorAction Stop
+            #if($ret -ne 0) {exit 1}
+
             try {
                 $disk = Get-Disk -Number $diskNum -ErrorAction Stop
-                $devType = if ($disk.FriendlyName -match 'RAMDisk') { 'PhysicalRamDisk' } else { 'PhysicalHardDisk' }
-                
+                $devType = if ($disk.FriendlyName -match 'RAMDisk') { 'RamDisk' } else { 'PhysicalHardDisk' }
+
                 $inventory += [ordered]@{
                     DiskNumber          = $diskNum
-                    UniqueId            = $disk.UniqueId
+                    SerialNumber        = $disk.SerialNumber
                     FriendlyName        = $disk.FriendlyName
                     DevType             = $devType
                     Path                = $null
-                    SizeMB              = [math]::Round($disk.Size / 1MB)
-                    SizeGB              = [math]::Round($disk.Size / 1GB, 2)
+                    Size                = FormatDiskSize -disk $
+                    PartitionTotalCnt   = @(Get-Partition -DiskNumber $diskNum -ErrorAction SilentlyContinue).Count
                     PartitionStyle      = $disk.PartitionStyle
-                    MountLabel          = if ($devType -eq 'PhysicalRamDisk') { "ramdisk$diskNum" } else { "disk$diskNum" }
+                    MountLabel          = if ($devType -eq 'RamDisk') { "ramdisk$diskNum" } else { "disk$diskNum" }
                     MountStatus         = 'unknown'
                     # Cast explicitly to array to ensure JSON format [1,2] or []
                     PartitionsNeedMount = @($parts)
@@ -99,63 +110,98 @@ function Get-PhysicalInventory {
 }
 
 function Get-VhdInventory {
-    param ($PathConfig, $SelectConfig)
+    param ($fileListConfig, $SelectConfig)
 
-    $vhdInput = ""
-    if (Test-Path $PathConfig) {
-        $vhdInput = Get-Content $PathConfig -Raw
-    } else {
+    $vhdInput = Get-Content $fileListConfig -Raw
+    if (-not $vhdInput) {
         $vhdInput = Read-Host "`nEnter VHDX paths"
-        $vhdInput | Set-Content -Path $PathConfig -Encoding UTF8
+        $vhdInput | Set-Content -Path $fileListConfig -Encoding UTF8
+    }
+
+    $paths = $vhdInput -split '\s+' | Where-Object { $_ }
+    foreach ($path in $paths) {
+        if (-not (Test-Path $path)) { continue }
+        Dismount-VHD -Path $path -ErrorAction SilentlyContinue
+        $vhd = Mount-VHD -Path $path -NoDriveLetter -Passthru
+        Show-VhdDiskSummary -Path $vhd.Path
+    }
+
+
+
+    if (Test-Path $SelectConfig) {
+        $inputLine = Get-Content $SelectConfig -Raw
+        Write-Host "Using saved Virtual Disk VHDX selection: $inputLine"
+    } else {
+        $inputLine = Read-Host "`nSelect virtual devices and it's partitions (e.g. 6[1,2] 1[])"
+        $outputLines = @()
+        foreach ($token in ($inputLine -split '\s+')) {
+            if ($token -match '^(\d+)\[(.*?)\]$') {
+                $diskNum = $matches[1]
+                $Path=(Get-VHD -DiskNumber $diskNum).Path
+                Get-Disk -Number $diskNum -ErrorAction Stop
+                # Create a clean array of integers
+                [int[]]$parts = @()
+                if ($matches[2]) { 
+                    $parts = $matches[2] -split ',' | ForEach-Object { [int]$_.Trim() } 
+                }
+                Write-Host " >>>>>>> path: $path $outputline    matches[2]: $matches[2]  "
+
+                $singleLine = "$($Path)[$($matches[2])]"
+                Write-Host " singleLine: $singleLine"
+                $outputLines += $singleLine
+            }
+        }
+        $outputlines | Set-Content -Path $SelectConfig -Encoding UTF8
+        $inputLine = Get-Content $SelectConfig -Raw
     }
 
     $vhdResults = @()
-    $paths = $vhdInput -split '\s+' | Where-Object { $_ }
+    
+    Write-Host "`n=== VHDX Disk Information ===  inputLine:$inputLine"
+    foreach ( $line in ($inputLine -split '\s+')) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        #if (-not (Test-Path $path)) { continue }
+        #$line -match '^(?<path>.+?)\[(?<parts>.*)\]$'
+        $cleanLine = $line.Trim()
+        Write-Host "++++> cleanLine : $cleanLine +++====="
+        if ($cleanLine -match '^(?<path>.+?)\[(?<parts>.*)\]$') {
+            $path = $matches['path'].Trim()
 
-    Write-Host "`n=== VHDX Disk Information ==="
-    foreach ($path in $paths) {
-        if (-not (Test-Path $path)) { continue }
-        try {
-            Dismount-VHD -Path $path -ErrorAction SilentlyContinue
-            $vhd = Mount-VHD -Path $path -NoDriveLetter -Passthru
-            $disk = Get-Disk -Number $vhd.DiskNumber
-            Show-DiskDisplay -Disk $disk -PartitionRows (Get-DiskAndPartitionInfo $disk)
-
-            $vhdResults += [ordered]@{
-                DiskNumber          = $disk.Number
-                UniqueId            = $disk.UniqueId
-                FriendlyName        = $disk.FriendlyName
-                DevType             = 'MsftVHD'
-                Path                = $path
-                SizeMB              = [math]::Round($disk.Size / 1MB)
-                SizeGB              = [math]::Round($disk.Size / 1GB, 2)
-                PartitionStyle      = $disk.PartitionStyle
-                MountLabel          = [IO.Path]::GetFileNameWithoutExtension($path)
-                MountStatus         = 'unknown'
-                PartitionsNeedMount = @() # Correct empty array initialization
-            }
-        } catch { Write-Warning "Failed to inspect VHDX: $path" }
-    }
-
-    $vhdSelectLine = ""
-    if (Test-Path $SelectConfig) {
-        $vhdSelectLine = Get-Content $SelectConfig -Raw
-    } else {
-        $vhdSelectLine = Read-Host "`nSelect VHDX partitions (e.g. 3[1,3])"
-        $vhdSelectLine | Set-Content -Path $SelectConfig -Encoding UTF8
-    }
-
-    foreach ($token in ($vhdSelectLine -split '\s+')) {
-        if ($token -match '^(\d+)\[(.*?)\]$') {
-            $dNum = [int]$matches[1]
+            # Create a clean array of integers
             [int[]]$parts = @()
-            if ($matches[2]) {
-                $parts = $matches[2] -split ',' | ForEach-Object { [int]$_.Trim() }
+            if ($matches['parts']) { 
+                $parts = $matches['parts'] -split ',' | ForEach-Object { [int]$_.Trim() } 
             }
-            $dev = $vhdResults | Where-Object { $_.DiskNumber -eq $dNum }
-            if ($dev) { 
-                $dev.PartitionsNeedMount = @($parts)
-            }
+            
+            Dismount-VHD -Path $path -ErrorAction Stop
+            $vhd = Mount-VHD -Path $path -NoDriveLetter -Passthru
+            $dev = Get-Disk -Number $($vhd.DiskNumber) -ErrorAction Stop
+            Write-Host "+++++++++++ path:$path DiskNumber:$($vhd.DiskNumber) BusType:$($dev.BusType) "
+            $ret=CheckInitializeEmptyDisk $dev -ErrorAction Stop
+            Write-Host "+++++++++++ path:$path DiskNumber:$($vhd.DiskNumber) BusType:$($dev.BusType) "
+            #if($ret -ne 0) {exit 1}
+
+            try {
+                $disk = Get-Disk -Number $vhd.DiskNumber
+
+
+                $vhdResults += [ordered]@{
+                    DiskNumber          = $disk.Number
+                    SerialNumber        = $vhd.DiskIdentifier
+                    FriendlyName        = $disk.FriendlyName
+                    DevType             = 'MsftVHD'
+                    Path                = $path
+                    Size                = FormatDiskSize -disk $vhd
+                    PartitionStyle      = $disk.PartitionStyle
+                    PartitionTotalCnt   = @(Get-Partition -DiskNumber $vhd.DiskNumber -ErrorAction SilentlyContinue).Count
+                    MountLabel          = [IO.Path]::GetFileNameWithoutExtension($path)
+                    MountStatus         = 'unknown'
+                    PartitionsNeedMount = @($parts)
+                }
+            } catch { Write-Warning "Failed to inspect VHDX: $path" }
+        } else {
+            Write-Error "Wrong farmat in the $SelectConfig file: $line"
+            exit 1
         }
     }
     return $vhdResults
@@ -165,21 +211,22 @@ function Get-VhdInventory {
 # Main Execution
 # --------------------------------------------------
 function main {
-    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
-        Write-Warning "Relaunching as Admin..."
-        Start-Process powershell "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
-        exit
-    }
+    Assert-Administrator -ScriptPath $PSCommandPath
 
     $paths = @{
-        PhysConfig   = Join-Path $PSScriptRoot "selected_physical_disks.txt"
         VhdFiles     = Join-Path $PSScriptRoot "vhdx_file_list.txt"
-        VhdConfig = Join-Path $PSScriptRoot "selected_vhdx_files.txt"
+        VhdConfig    = Join-Path $PSScriptRoot "selected_vhdx_files.txt"
+        PhysConfig   = Join-Path $PSScriptRoot "selected_physical_disks.txt"
         OutputJson   = Join-Path $PSScriptRoot "devices.json"
     }
-
+    wsl --shutdown
+    BringAlldiskOnline
+    #Remove-Item $paths.VhdConfig -ErrorAction SilentlyContinue
+    Show-AllDiskSummary 
     $physical = Get-PhysicalInventory -ConfigFile $paths.PhysConfig
-    $vhd      = Get-VhdInventory -PathConfig $paths.VhdFiles -SelectConfig $paths.VhdConfig
+
+    #Show-AllVHDSummary -VHDfileListConfigFilePath $paths.VhdFiles
+    $vhd      = Get-VhdInventory -fileListConfig $paths.VhdFiles -SelectConfig $paths.VhdConfig
 
     $result = @{
         Physical = $physical
