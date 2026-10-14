@@ -7,8 +7,7 @@ Dynamic generate-runtime.ps1
 - VHDX devices: attach → read partitions → detach → DiskNumber=null
 - Universal partition schema:
     PartitionNumber
-    SizeMB
-    SizeGB
+    Size
     GptType
     MbrType
     Type
@@ -27,6 +26,9 @@ param(
     [string]$ConfigPath,
     [string]$RuntimePath
 )
+
+$modulePath = Join-Path $PSScriptRoot "DiskTools.psm1"
+Import-Module $modulePath -Force
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -61,7 +63,7 @@ function Update-DiskNumbersFromWindows {
     Write-Host "=== Updating DiskNumber from Windows (Physical disks only) ==="
 
     # Read all Windows disks
-    $winDisks = Get-Disk | Select-Object Number, FriendlyName, UniqueId
+    $winDisks = Get-Disk | Select-Object Number, FriendlyName, SerialNumber
 
     foreach ($groupName in $configRoot.PSObject.Properties.Name) {
         $group = $configRoot.$groupName
@@ -74,18 +76,18 @@ function Update-DiskNumbersFromWindows {
                 continue
             }
 
-            # Skip if no UniqueId
-            if (-not $dev.UniqueId) {
-                Write-Warning "  Device $($dev.MountLabel) has no UniqueId. Skipping."
+            # Skip if no SerialNumber
+            if (-not $dev.SerialNumber) {
+                Write-Warning "  Device $($dev.MountLabel) has no SerialNumber. Skipping."
                 continue
             }
 
-            # Normalize UniqueId for comparison
-            $targetId = $dev.UniqueId.Trim().ToLower()
+            # Normalize SerialNumber for comparison
+            $targetId = $dev.SerialNumber.Trim().ToLower()
 
-            # Match by UniqueId
+            # Match by SerialNumber
             $match = $winDisks | Where-Object {
-                $_.UniqueId -and $_.UniqueId.Trim().ToLower() -eq $targetId
+                $_.SerialNumber -and $_.SerialNumber.Trim().ToLower() -eq $targetId
             }
 
             if ($match) {
@@ -93,7 +95,7 @@ function Update-DiskNumbersFromWindows {
                 Write-Host "  Updated: $($dev.MountLabel) → DiskNumber=$($dev.DiskNumber)"
             }
             else {
-                Write-Warning "  Could not match UniqueId=$($dev.UniqueId) for $($dev.MountLabel). DiskNumber unchanged."
+                Write-Warning "  Could not match SerialNumber=$($dev.SerialNumber) for $($dev.MountLabel). DiskNumber unchanged."
             }
         }
     }
@@ -139,8 +141,7 @@ function New-PartitionMetadataList {
     foreach ($p in $Partitions) {
         $pm = [ordered]@{
             PartitionNumber       = $p.PartitionNumber
-            SizeMB                = $null
-            SizeGB                = $null
+            Size                  = $null
             GptType               = $p.GptType
             MbrType               = $p.MbrType
             Type                  = $p.Type
@@ -150,10 +151,9 @@ function New-PartitionMetadataList {
             PartitionMountStatus  = "pending"
         }
 
-        # SizeMB / SizeGB
+
         if ($p.Size -ne $null) {
-            $pm.SizeMB = [math]::Round($p.Size / 1MB)
-            $pm.SizeGB = [math]::Round($p.Size / 1GB, 2)
+            $pm.Size = FormatDiskSize -disk $p
         }
 
         # Filesystem detection
@@ -198,7 +198,7 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
 
     foreach ($dev in $groupDevices) {
 
-        Write-Host "  Device UniqueId=$($dev.UniqueId) MountLabel=$($dev.MountLabel)"
+        Write-Host "  Device SerialNumber=$($dev.SerialNumber) MountLabel=$($dev.MountLabel)"
 
         $isVhd = $false
         $diskNumber = $null
@@ -212,7 +212,7 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
         } elseif ($dev.PSObject.Properties.Name -contains "DiskNumber") {
             $isVhd = $false
         } else {
-            Write-Warning "Device UniqueId=$($dev.UniqueId) has neither Path nor DiskNumber. Marking as error."
+            Write-Warning "Device SerialNumber=$($dev.SerialNumber) has neither Path nor DiskNumber. Marking as error."
             $deviceMountStatus = "error"
         }
 
@@ -229,7 +229,7 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
                     $partitionTotalCnt = $partitions.Count
                 }
             } catch {
-                Write-Warning ("Failed to process Physical device UniqueId={0}: {1}" -f $dev.UniqueId, $_.Exception.Message)
+                Write-Warning ("Failed to process Physical device SerialNumber={0}: {1}" -f $dev.SerialNumber, $_.Exception.Message)
                 $deviceMountStatus = "error"
             }
         }
@@ -276,13 +276,12 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
         # Build runtime device entry
         # -------------------------------
         $meta = [ordered]@{
-            UniqueId            = $dev.UniqueId
+            SerialNumber            = $dev.SerialNumber
             DevType             = $dev.DevType
             Path                = $dev.Path
             MountLabel          = $dev.MountLabel
             PartitionsNeedMount = $dev.PartitionsNeedMount
-            SizeMB              = $dev.SizeMB
-            SizeGB              = $dev.SizeGB
+            Size                = $dev.Size
             PartitionStyle      = $dev.PartitionStyle
 
             DiskNumber          = $diskNumber
@@ -315,7 +314,7 @@ $seen = @{}   # prevents offlining the same disk twice
 foreach ($groupName in $configRoot.PSObject.Properties.Name) {
     foreach ($dev in $configRoot.$groupName) {
 
-        if ($dev.DevType -eq "PhysicalHardDisk" -or $dev.DevType -eq "PhysicalRamDisk") {
+        if ($dev.DevType -eq "PhysicalHardDisk" -or $dev.DevType -eq "RamDisk") {
 
             $diskNum = $dev.DiskNumber
             if ($diskNum -ne $null -and -not $seen.ContainsKey($diskNum)) {

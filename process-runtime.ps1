@@ -1,14 +1,14 @@
 <#
 process-runtime.ps1
 Consumes runtime-devices.json (grouped), mounts devices/partitions,
-handles PhysicalRamDisk special-case, and writes runtime-devices-final.json.
+handles DevType special-case, and writes runtime-devices-final.json.
 
 Rules:
 - Iterate groups dynamically (same order as runtime-devices.json)
 - Detect device type via DevType
 - If PartitionTotalCnt = 0 → mount whole disk (no --partition)
 - If PartitionTotalCnt > 0 → mount only partitions with MountRequired = true
-- PhysicalRamDisk special-case: format ext4 if needed, then mount whole disk
+- DevType special-case: format ext4 if needed, then mount whole disk
 - Update mountStatus and PartitionMountStatus
 #>
 
@@ -39,12 +39,12 @@ function Invoke-Wsl {
 }
 
 # ------------------------------------------------------------
-# Helper: find Linux disk node (/dev/sdX) by UniqueId ↔ ID_SERIAL_SHORT
+# Helper: find Linux disk node (/dev/sdX) by SerialNumber ↔ ID_SERIAL_SHORT
 # ------------------------------------------------------------
-function Find-LinuxDiskByUniqueId {
-    param([string]$UniqueId)
+function Find-LinuxDiskBySerialNumber {
+    param([string]$SerialNumber)
 
-    Write-Host "  [ramdisk] Resolving Linux disk for UniqueId=$UniqueId"
+    Write-Host "  [ramdisk] Resolving Linux disk for SerialNumber=$SerialNumber"
 
     $lsblkJson = Invoke-Wsl "lsblk -J -o NAME,TYPE"
     if (-not $lsblkJson) { return $null }
@@ -63,18 +63,18 @@ function Find-LinuxDiskByUniqueId {
 
         $short = ($line -split "=",2)[1].Trim()
 
-        if ($short -eq $UniqueId) {
-            Write-Host "  [ramdisk] Matched UniqueId=$UniqueId to /dev/$name"
+        if ($short -eq $SerialNumber) {
+            Write-Host "  [ramdisk] Matched SerialNumber=$SerialNumber to /dev/$name"
             return "/dev/$name"
         }
     }
 
-    Write-Warning "  [ramdisk] No Linux disk found for UniqueId=$UniqueId"
+    Write-Warning "  [ramdisk] No Linux disk found for SerialNumber=$SerialNumber"
     return $null
 }
 
 # ------------------------------------------------------------
-# Special-case handler for PhysicalRamDisk
+# Special-case handler for DevType
 # ------------------------------------------------------------
 function Test-DriveExists {
     param (
@@ -137,7 +137,7 @@ function Handle-RamDiskSpecialCase {
     # 3. Format whole disk and mount again
     # ------------------------------------------------------------
     Write-Host "  [ramdisk] Resolving Linux disk path for formatting..."
-    $linuxDisk = Find-LinuxDiskByUniqueId -UniqueId $dev.UniqueId
+    $linuxDisk = Find-LinuxDiskBySerialNumber -SerialNumber $dev.SerialNumber
     if (-not $linuxDisk) {
         Write-Warning "  [ramdisk] Cannot resolve Linux disk. Marking failed."
         $dev.mountStatus = "failed"
@@ -297,8 +297,8 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
 
         switch ($dev.DevType) {
 		
-            "PhysicalRamDisk" {
-                Handle-RamDiskSpecialCase $dev
+            "RamDisk" {
+                Handle-Physical $dev
             }
 		
             "PhysicalHardDisk" {

@@ -1,1 +1,2 @@
-﻿6[] 7[]
+﻿D:\VM\VirtualHardDisks\vhd0.vhdx[1]
+D:\VM\VirtualHardDisks\vhd1.vhdx[1]

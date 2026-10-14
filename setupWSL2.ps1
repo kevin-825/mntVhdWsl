@@ -54,8 +54,8 @@ $genRuntime  = Join-Path $root "generate-runtime.ps1"
 $procRuntime = Join-Path $root "process-runtime.ps1"
 
 # --- Reset WSL state ---
-Write-Host "Shutting down WSL..."
-wsl --shutdown
+#Write-Host "Shutting down WSL..."
+#wsl --shutdown
 Start-Sleep -Seconds 1
 
 # ------------------------------------------------------------

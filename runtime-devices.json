@@ -1,53 +1,70 @@
 ﻿{
     "MsftVHD":  [
                     {
-                        "UniqueId":  "6002248065D6F443E0C63CF5F5B8C641",
+                        "SerialNumber":  "F8538B97-349B-4240-B853-F4521E87F8AD",
                         "DevType":  "MsftVHD",
-                        "Path":  "D:\\VirtualMachines\\vhds\\vhd0.vhdx",
+                        "Path":  "D:\\VM\\VirtualHardDisks\\vhd0.vhdx",
                         "MountLabel":  "vhd0",
                         "PartitionsNeedMount":  [
-
+                                                    1
                                                 ],
-                        "SizeMB":  358400,
-                        "SizeGB":  350,
-                        "PartitionStyle":  "RAW",
+                        "Size":  "128 GB",
+                        "PartitionStyle":  "GPT",
                         "DiskNumber":  null,
-                        "PartitionTotalCnt":  0,
+                        "PartitionTotalCnt":  1,
                         "mountStatus":  "success",
                         "Partitions":  [
-
+                                           {
+                                               "PartitionNumber":  1,
+                                               "Size":  "128 GB",
+                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                                               "MbrType":  null,
+                                               "Type":  "Unknown",
+                                               "FsType":  null,
+                                               "MountRequired":  true,
+                                               "PartitionMountLabel":  "vhd0",
+                                               "PartitionMountStatus":  "success"
+                                           }
                                        ]
                     },
                     {
-                        "UniqueId":  "600224805C4DF60BCC9F8D87BEDD1902",
+                        "SerialNumber":  "50AC64B9-C8D4-42D1-AE6D-2708BFC1E540",
                         "DevType":  "MsftVHD",
-                        "Path":  "D:\\VirtualMachines\\vhds\\vhd1.vhdx",
+                        "Path":  "D:\\VM\\VirtualHardDisks\\vhd1.vhdx",
                         "MountLabel":  "vhd1",
                         "PartitionsNeedMount":  [
-
+                                                    1
                                                 ],
-                        "SizeMB":  130048,
-                        "SizeGB":  127,
-                        "PartitionStyle":  "RAW",
+                        "Size":  "4 GB",
+                        "PartitionStyle":  "GPT",
                         "DiskNumber":  null,
-                        "PartitionTotalCnt":  0,
+                        "PartitionTotalCnt":  1,
                         "mountStatus":  "success",
                         "Partitions":  [
-
+                                           {
+                                               "PartitionNumber":  1,
+                                               "Size":  "4 GB",
+                                               "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                                               "MbrType":  null,
+                                               "Type":  "Unknown",
+                                               "FsType":  null,
+                                               "MountRequired":  true,
+                                               "PartitionMountLabel":  "vhd1",
+                                               "PartitionMountStatus":  "success"
+                                           }
                                        ]
                     }
                 ],
     "Physical":  [
                      {
-                         "UniqueId":  "eui.5CD2E47C8ED00100",
+                         "SerialNumber":  "5CD2_E47C_8ED0_0100.",
                          "DevType":  "PhysicalHardDisk",
                          "Path":  null,
                          "MountLabel":  "disk1",
                          "PartitionsNeedMount":  [
                                                      1
                                                  ],
-                         "SizeMB":  27905,
-                         "SizeGB":  27.25,
+                         "Size":  "0 MB",
                          "PartitionStyle":  "GPT",
                          "DiskNumber":  1,
                          "PartitionTotalCnt":  1,
@@ -55,8 +72,7 @@
                          "Partitions":  [
                                             {
                                                 "PartitionNumber":  1,
-                                                "SizeMB":  27903,
-                                                "SizeGB":  27.25,
+                                                "Size":  "27 GB",
                                                 "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
                                                 "MbrType":  null,
                                                 "Type":  "Unknown",
@@ -68,15 +84,14 @@
                                         ]
                      },
                      {
-                         "UniqueId":  "eui.5CD2E4AE52AF0100",
+                         "SerialNumber":  "5CD2_E4AE_52AF_0100.",
                          "DevType":  "PhysicalHardDisk",
                          "Path":  null,
                          "MountLabel":  "disk2",
                          "PartitionsNeedMount":  [
                                                      1
                                                  ],
-                         "SizeMB":  112925,
-                         "SizeGB":  110.28,
+                         "Size":  "0 MB",
                          "PartitionStyle":  "GPT",
                          "DiskNumber":  2,
                          "PartitionTotalCnt":  1,
@@ -84,8 +99,7 @@
                          "Partitions":  [
                                             {
                                                 "PartitionNumber":  1,
-                                                "SizeMB":  112923,
-                                                "SizeGB":  110.28,
+                                                "Size":  "110 GB",
                                                 "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
                                                 "MbrType":  null,
                                                 "Type":  "Unknown",
@@ -97,31 +111,29 @@
                                         ]
                      },
                      {
-                         "UniqueId":  "URDVHD00",
-                         "DevType":  "PhysicalRamDisk",
+                         "SerialNumber":  "URDVHD00",
+                         "DevType":  "RamDisk",
                          "Path":  null,
                          "MountLabel":  "ramdisk5",
                          "PartitionsNeedMount":  [
-
+                                                     1
                                                  ],
-                         "SizeMB":  32800,
-                         "SizeGB":  32.03,
-                         "PartitionStyle":  "RAW",
+                         "Size":  "0 MB",
+                         "PartitionStyle":  "GPT",
                          "DiskNumber":  5,
                          "PartitionTotalCnt":  1,
                          "mountStatus":  "success",
                          "Partitions":  [
                                             {
                                                 "PartitionNumber":  1,
-                                                "SizeMB":  35840,
-                                                "SizeGB":  35,
-                                                "GptType":  null,
-                                                "MbrType":  7,
-                                                "Type":  "IFS",
+                                                "Size":  "4 GB",
+                                                "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
+                                                "MbrType":  null,
+                                                "Type":  "Unknown",
                                                 "FsType":  null,
-                                                "MountRequired":  false,
+                                                "MountRequired":  true,
                                                 "PartitionMountLabel":  "ramdisk5",
-                                                "PartitionMountStatus":  "pending"
+                                                "PartitionMountStatus":  "success"
                                             }
                                         ]
                      }
