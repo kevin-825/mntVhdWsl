@@ -12,7 +12,7 @@
                         "PartitionStyle":  "GPT",
                         "DiskNumber":  null,
                         "PartitionTotalCnt":  1,
-                        "mountStatus":  "success",
+                        "mountStatus":  "pending",
                         "Partitions":  [
                                            {
                                                "PartitionNumber":  1,
@@ -23,7 +23,7 @@
                                                "FsType":  null,
                                                "MountRequired":  true,
                                                "PartitionMountLabel":  "vhd0",
-                                               "PartitionMountStatus":  "success"
+                                               "PartitionMountStatus":  "pending"
                                            }
                                        ]
                     },
@@ -39,7 +39,7 @@
                         "PartitionStyle":  "GPT",
                         "DiskNumber":  null,
                         "PartitionTotalCnt":  1,
-                        "mountStatus":  "success",
+                        "mountStatus":  "pending",
                         "Partitions":  [
                                            {
                                                "PartitionNumber":  1,
@@ -50,7 +50,7 @@
                                                "FsType":  null,
                                                "MountRequired":  true,
                                                "PartitionMountLabel":  "vhd1",
-                                               "PartitionMountStatus":  "success"
+                                               "PartitionMountStatus":  "pending"
                                            }
                                        ]
                     }
@@ -59,7 +59,7 @@
                      {
                          "SerialNumber":  "5CD2_E47C_8ED0_0100.",
                          "DevType":  "PhysicalHardDisk",
-                         "Path":  null,
+                         "Path":  "\\\\.\\PHYSICALDRIVE1",
                          "MountLabel":  "disk1",
                          "PartitionsNeedMount":  [
                                                      1
@@ -67,26 +67,16 @@
                          "Size":  "0 MB",
                          "PartitionStyle":  "GPT",
                          "DiskNumber":  1,
-                         "PartitionTotalCnt":  1,
-                         "mountStatus":  "success",
+                         "PartitionTotalCnt":  0,
+                         "mountStatus":  "pending",
                          "Partitions":  [
-                                            {
-                                                "PartitionNumber":  1,
-                                                "Size":  "27 GB",
-                                                "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                                "MbrType":  null,
-                                                "Type":  "Unknown",
-                                                "FsType":  null,
-                                                "MountRequired":  true,
-                                                "PartitionMountLabel":  "disk1",
-                                                "PartitionMountStatus":  "success"
-                                            }
+
                                         ]
                      },
                      {
                          "SerialNumber":  "5CD2_E4AE_52AF_0100.",
                          "DevType":  "PhysicalHardDisk",
-                         "Path":  null,
+                         "Path":  "\\\\.\\PHYSICALDRIVE2",
                          "MountLabel":  "disk2",
                          "PartitionsNeedMount":  [
                                                      1
@@ -94,47 +84,27 @@
                          "Size":  "0 MB",
                          "PartitionStyle":  "GPT",
                          "DiskNumber":  2,
-                         "PartitionTotalCnt":  1,
-                         "mountStatus":  "success",
+                         "PartitionTotalCnt":  0,
+                         "mountStatus":  "pending",
                          "Partitions":  [
-                                            {
-                                                "PartitionNumber":  1,
-                                                "Size":  "110 GB",
-                                                "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                                "MbrType":  null,
-                                                "Type":  "Unknown",
-                                                "FsType":  null,
-                                                "MountRequired":  true,
-                                                "PartitionMountLabel":  "disk2",
-                                                "PartitionMountStatus":  "success"
-                                            }
+
                                         ]
                      },
                      {
                          "SerialNumber":  "URDVHD00",
                          "DevType":  "RamDisk",
-                         "Path":  null,
+                         "Path":  "\\\\.\\PHYSICALDRIVE5",
                          "MountLabel":  "ramdisk5",
                          "PartitionsNeedMount":  [
                                                      1
                                                  ],
                          "Size":  "0 MB",
-                         "PartitionStyle":  "GPT",
+                         "PartitionStyle":  "MBR",
                          "DiskNumber":  5,
-                         "PartitionTotalCnt":  1,
-                         "mountStatus":  "success",
+                         "PartitionTotalCnt":  0,
+                         "mountStatus":  "pending",
                          "Partitions":  [
-                                            {
-                                                "PartitionNumber":  1,
-                                                "Size":  "4 GB",
-                                                "GptType":  "{0fc63daf-8483-4772-8e79-3d69d8477de4}",
-                                                "MbrType":  null,
-                                                "Type":  "Unknown",
-                                                "FsType":  null,
-                                                "MountRequired":  true,
-                                                "PartitionMountLabel":  "ramdisk5",
-                                                "PartitionMountStatus":  "success"
-                                            }
+
                                         ]
                      }
                  ]

@@ -87,6 +87,7 @@ function Get-PhysicalInventory {
 
             try {
                 $disk = Get-Disk -Number $diskNum -ErrorAction Stop
+                $diskCIM = Get-CimInstance -ClassName Win32_DiskDrive | Where-Object { $_.Index -eq $diskNum }
                 $devType = if ($disk.FriendlyName -match 'RAMDisk') { 'RamDisk' } else { 'PhysicalHardDisk' }
 
                 $inventory += [ordered]@{
@@ -94,7 +95,7 @@ function Get-PhysicalInventory {
                     SerialNumber        = $disk.SerialNumber
                     FriendlyName        = $disk.FriendlyName
                     DevType             = $devType
-                    Path                = $null
+                    Path                = $diskCIM.DeviceID
                     Size                = FormatDiskSize -disk $
                     PartitionTotalCnt   = @(Get-Partition -DiskNumber $diskNum -ErrorAction SilentlyContinue).Count
                     PartitionStyle      = $disk.PartitionStyle

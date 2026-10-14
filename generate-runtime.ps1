@@ -207,7 +207,8 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
         $deviceMountStatus = "pending"
 
         # Determine device type dynamically
-        if ($dev.Path) {
+        Write-Host " dev.Type " 
+        if ($dev.devType -eq "MsftVHD") {
             $isVhd = $true
         } elseif ($dev.PSObject.Properties.Name -contains "DiskNumber") {
             $isVhd = $false
@@ -245,8 +246,9 @@ foreach ($groupName in $configRoot.PSObject.Properties.Name) {
             }
 
             try {
+                 wsl --unmount $vhdPath
                 $vhd = Get-VHD -Path $vhdPath -ErrorAction SilentlyContinue
-                if (-not $vhd -or -not $vhd.Attached) {
+                if (-not $vhd -or -not $vhd.DiskNumber) {
                     Write-Host "    Attach-VHD $vhdPath"
                     Mount-VHD -Path $vhdPath -NoDriveLetter -ErrorAction Stop
                     $vhd = Get-VHD -Path $vhdPath -ErrorAction Stop

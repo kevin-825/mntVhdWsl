@@ -298,7 +298,7 @@ foreach ($groupName in $runtime.PSObject.Properties.Name) {
         switch ($dev.DevType) {
 
             "RamDisk" {
-                Handle-Physical $dev
+                Handle-RamDiskSpecialCase $dev
             }
 		
             "PhysicalHardDisk" {
