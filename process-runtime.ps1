@@ -99,13 +99,13 @@ function Handle-RamDiskSpecialCase {
     # ------------------------------------------------------------
     # 1. check paritions and format if needed
     # ------------------------------------------------------------
-        $disk = Get-Disk -Number $($dev.diskNumber) -ErrorAction Stop
+    $disk = Get-Disk -Number $($dev.diskNumber) -ErrorAction Stop
     $parts= Get-Partition -DiskNumber $($dev.diskNumber) -ErrorAction SilentlyContinue
     $part_cnt = @(Get-Partition -DiskNumber $($dev.diskNumber) -ErrorAction SilentlyContinue).Count
 
-    if (( $part_cnt -eq 0)  -or ($disk.PartitionStyle -in @('RAW', 'Unknown'))) {
+    $isUninitialized = ($disk.PartitionStyle -in @('RAW', 'Unknown')) -or (-not $part_cnt)
+    if ( $isUninitialized ) {
         CheckInitializeEmptyDisk $dev -ErrorAction Stop
-        
     } else {
         #if there is partition 
         wsl --mount $phy --bare 

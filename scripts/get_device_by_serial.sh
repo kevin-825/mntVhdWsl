@@ -14,9 +14,10 @@ normalize_disk_identifier() {
     
     if [ "$devType" = "MsftVHD" ]; then
         # For VHDX files, strip hyphens, convert to lowercase, 
-        # and extract the trailing signature matching Linux udev properties
+        # and extract the trailing 12 characters matching Linux udev properties
         local clean_guid
         clean_guid=$(echo "$serial_input" | tr -d '-' | tr '[:upper:]' '[:lower:]')
+        echo "${clean_guid: -12}"
     else
         # For physical disks, clean up standard serial numbers
         echo "$serial_input" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]'

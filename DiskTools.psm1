@@ -356,8 +356,12 @@ function CheckInitializeEmptyDisk {
     )
 
     # Make the condition strict: It must be RAW/Unknown AND have 0 partitions to be considered empty
-    $isUninitialized = ($dev.PartitionStyle -in @('RAW', 'Unknown')) -or ($dev.PartitionTotalCnt -eq 0)
-
+    Write-Host " PartitionStyle:$($dev.PartitionStyle)  $($dev.PartitionTotalCnt)"
+    $part_cnt=@(Get-Partition -DiskNumber $($dev.diskNumber) -ErrorAction SilentlyContinue).Count
+    $isUninitialized = `
+        ($dev.PartitionStyle -in @('RAW', 'Unknown')) `
+        -or (-not $part_cnt)
+    Write-Host " PartitionStyle:$($dev.PartitionStyle)  part_cnt:$($part_cnt)  isUninitialized:$isUninitialized"
     if (-not $isUninitialized) {
         Write-Host "Disk $($dev.DiskNumber) is Normal (Not Empty) ..." -ForegroundColor Green
         return 0
