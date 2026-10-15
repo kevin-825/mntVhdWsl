@@ -97,81 +97,79 @@ function Handle-RamDiskSpecialCase {
     $phy = "\\.\PHYSICALDRIVE$($dev.DiskNumber)"
 
     # ------------------------------------------------------------
-    # 1. Try whole-disk mount
+    # 1. check paritions and format if needed
     # ------------------------------------------------------------
-    Write-Host "  [ramdisk] Trying whole-disk mount..."
-    & wsl.exe --mount $phy --name $dev.MountLabel --options "noatime"
+        $disk = Get-Disk -Number $($dev.diskNumber) -ErrorAction Stop
+    $parts= Get-Partition -DiskNumber $($dev.diskNumber) -ErrorAction SilentlyContinue
+    $part_cnt = @(Get-Partition -DiskNumber $($dev.diskNumber) -ErrorAction SilentlyContinue).Count
 
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [ramdisk] Whole-disk mount succeeded."
-        foreach ($pm in $dev.Partitions) {
-            if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
+    if (( $part_cnt -eq 0)  -or ($disk.PartitionStyle -in @('RAW', 'Unknown'))) {
+        CheckInitializeEmptyDisk $dev -ErrorAction Stop
+        
+    } else {
+        #if there is partition 
+        wsl --mount $phy --bare 
+        $wslProjectDir = Translate-WinPath2LinuxPath $PSScriptRoot
+        $partitionLines = @(wsl.exe -u root bash -lc "cd '$wslProjectDir' && \
+                            ./scripts/get_device_by_serial.sh $($dev.SerialNumber) $($dev.devType)")
+        Write-Host "partitionLines:>> $partitionLines <<"
+        for ($i = 0; $i -lt $partitionLines.Count; $i++) {
+            $line = $partitionLines[$i]
+            $pm = $dev.Partitions[$i]
+            $name, $size, $fstype, $type, $label = $line -split '\s+'
+
+            # Now you can use them directly!
+            Write-Host "Partition[$i] "name: $name, Size: $size, FS: $fstype""
+            if (-not $pm.MountRequired) { 
+                continue 
+            }
+
+            #if a parition needs to be mounted is NTFS  file system,
+            # then this partition will be  formatted to ext4
+            # If the partition is NTFS, format it to ext4
+            if ($fstype -in ("NTFS", "ntfs")) {
+                Write-Host "-> Partition /dev/$name is NTFS. Converting and formatting to ext4..." -ForegroundColor Yellow
+                
+                # Ensure it's unmounted before formatting, then force format with ext4
+                wsl.exe -u root bash -lc "umount /dev/$name 2>/dev/null; mkfs.ext4 -F /dev/$name"
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "-> Successfully formatted /dev/$name to ext4." -ForegroundColor Green
+                    $fstype = "ext4" # Update local variable reference
+                } else {
+                    Write-Error "-> Failed to format /dev/$name to ext4."
+                    continue
+                }
+            }
         }
-        $dev.mountStatus = "success"
-        return
     }
-
-    Write-Host "  [ramdisk] Whole-disk mount failed. Trying partition mount..."
 
     # ------------------------------------------------------------
     # 2. Try partition mount (if exists)
     # ------------------------------------------------------------
-    if ($dev.Partitions.Count -gt 0) {
-        $partNum = $dev.Partitions[0].PartitionNumber
-        Write-Host "  [ramdisk] Trying partition mount..."
-        & wsl.exe --mount $phy --partition $partNum --name $dev.MountLabel --options "noatime"
+    # Case 2: mount required partitions
+    foreach ($pm in $dev.Partitions) {
+        if (-not $pm.MountRequired) { continue }
+
+        $pNum   = [int]$pm.PartitionNumber
+        $pLabel = $pm.PartitionMountLabel
+
+        Write-Host "[ramdisk]  Mounting partition #$pNum as '$pLabel'..."
+        & wsl.exe --mount $phy --name $pLabel --partition $pNum --options "noatime"
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "  [ramdisk] Partition mount succeeded."
-            foreach ($pm in $dev.Partitions) {
-                if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
-            }
-            $dev.mountStatus = "success"
-            return
+            $pm.PartitionMountStatus = "success"
+        } else {
+            $pm.PartitionMountStatus = "failed"
         }
-
-        Write-Host "  [ramdisk] Partition mount failed."
     }
 
-    # ------------------------------------------------------------
-    # 3. Format whole disk and mount again
-    # ------------------------------------------------------------
-    Write-Host "  [ramdisk] Resolving Linux disk path for formatting..."
-    $linuxDisk = Find-LinuxDiskBySerialNumber -SerialNumber $dev.SerialNumber
-    if (-not $linuxDisk) {
-        Write-Warning "  [ramdisk] Cannot resolve Linux disk. Marking failed."
-        $dev.mountStatus = "failed"
-        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
-        return
-    }
+    # Device success only if all required partitions succeeded
+    $failed = @(
+        $dev.Partitions | Where-Object { $_.MountRequired -and $_.PartitionMountStatus -ne "success" }
+    )
 
-    Write-Host "  [ramdisk] Formatting whole disk as ext4..."
-    & wsl.exe bash -lc "sudo mkfs.ext4 -F $linuxDisk"
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "  [ramdisk] mkfs.ext4 failed."
-        $dev.mountStatus = "failed"
-        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
-        return
-    }
-
-    Write-Host "  [ramdisk] mkfs.ext4 succeeded. Re-mounting..."
-
-    & wsl.exe --mount $phy --name $dev.MountLabel --options "noatime"
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "  [ramdisk] Mount after format failed."
-        $dev.mountStatus = "failed"
-        foreach ($pm in $dev.Partitions) { $pm.PartitionMountStatus = "failed" }
-        return
-    }
-
-    foreach ($pm in $dev.Partitions) {
-        if ($pm.MountRequired) { $pm.PartitionMountStatus = "success" }
-    }
-
-    $dev.mountStatus = "success"
-    Write-Host "  [ramdisk] Mounted successfully after format."
+    $dev.mountStatus = if ($failed.Count -eq 0) { "success" } else { "failed" }
 }
 
 # ------------------------------------------------------------

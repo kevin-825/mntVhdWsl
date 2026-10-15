@@ -261,7 +261,7 @@ function Show-AllVHDSummary {
     }
 }
 
-function de_initialize_disk_by_num {
+function De-initialize_disk_by_num {
     [CmdletBinding()]
     param ($diskNum)
     #Clear-Disk -Number 1 -RemoveData -RemoveOEM -Confirm:$false
@@ -310,6 +310,44 @@ function Find-LinuxDiskBySerialNumber {
     return $null
 }
 
+function Translate-WinPath2LinuxPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+        [Alias('FullName', 'Path')]
+        [string[]]$WinPath
+    )
+
+    process {
+        foreach ($path in $WinPath) {
+            # 1. Resolve relative paths (like "." or "..\foo") to absolute Windows paths
+            $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+
+            # 2. Try using WSL's native 'wslpath' utility (handles custom mounts & distros perfectly)
+            try {
+                $linuxPath = & wsl.exe wslpath -u "$resolvedPath" 2>&1
+                if ($LASTEXITCODE -eq 0 -and $linuxPath) {
+                    $linuxPath.Trim()
+                    continue
+                }
+            }
+            catch {
+                # Fallback to manual string conversion if wslpath encounters an issue
+            }
+
+            # 3. Pure PowerShell Fallback (C:\Foo\Bar -> /mnt/c/Foo/Bar)
+            if ($resolvedPath -match '^[a-zA-Z]:') {
+                $drive = $resolvedPath.Substring(0, 1).ToLower()
+                $remainder = $resolvedPath.Substring(2).Replace('\', '/')
+                "/mnt/$drive$remainder"
+            } 
+            else {
+                # Generic fallback for UNC or non-standard paths
+                $resolvedPath.Replace('\', '/')
+            }
+        }
+    }
+}
 
 function CheckInitializeEmptyDisk {
     [CmdletBinding()]
@@ -367,14 +405,7 @@ function CheckInitializeEmptyDisk {
         }
         # Get the WSL-compatible path of your current Windows project directory
         # FIXED: Use $PWD.ProviderPath to prevent backslash stripping
-        $winPath = $PSScriptRoot -replace '\\', '/'
-        Write-Host "winPath: $winPath"
-        $wslPathRaw = wsl.exe wslpath -u "$winPath" 2>&1
-        
-        if ($LASTEXITCODE -ne 0 -or -not $wslPathRaw) {
-            throw "Failed to convert Windows path to WSL path: $wslPathRaw"
-        }
-        $wslProjectDir = $wslPathRaw.Trim()
+        $wslProjectDir = Translate-WinPath2LinuxPath $PSScriptRoot
         Write-Host "wslProjectDir: $wslProjectDir"
 
         # Cd into the project directory first, then run the script
@@ -391,7 +422,7 @@ function CheckInitializeEmptyDisk {
             Write-Host "$line"
         }
         
-        Write-Warning "please re-run the setupWSL2.ps1 script"
+        Write-Warning " >>>Done Initilizing Empty disk! "
         
     } catch {
         # ADDED: Granular tracing showing exact line number and error message
